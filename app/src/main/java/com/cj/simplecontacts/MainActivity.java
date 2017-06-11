@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = "MainActivity";
-
+    private ImageView iv;
     private ImageView iv1;
     private ImageView iv2;
     private ImageView iv3;
@@ -34,9 +34,18 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"MainActivity onCreate");
         setContentView(R.layout.activity_main);
 
+
         if(!isFirstUse()){
-            startActivity(new Intent(MainActivity.this,IndexActivity.class));
-            finish();
+            iv = (ImageView) findViewById(R.id.iv);
+            iv.setVisibility(View.VISIBLE);
+            iv.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    startActivity(new Intent(MainActivity.this,IndexActivity.class));
+                    MainActivity.this.finish();
+                }
+            },3000);
+
             return;
         }
         initCommonObject();
@@ -91,11 +100,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        ll_pager_indicator = (LinearLayout) findViewById(R.id.ll_pager_indicator);
         iv1 = (ImageView) findViewById(R.id.iv1);
         iv2 = (ImageView) findViewById(R.id.iv2);
         iv3 = (ImageView) findViewById(R.id.iv3);
         vp = (ViewPager) findViewById(R.id.vp);
-        ll_pager_indicator = (LinearLayout) findViewById(R.id.ll_pager_indicator);
+        ll_pager_indicator.setVisibility(View.VISIBLE);
+
     }
 
     private void setUpViewPager() {
@@ -121,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
 
         vp.setAdapter(new MyAdpater());
         vp.setCurrentItem(0);
-        ll_pager_indicator.setVisibility(View.VISIBLE);
         iv1.setSelected(true);
         iv2.setSelected(false);
         iv3.setSelected(false);

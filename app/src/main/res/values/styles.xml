@@ -9,5 +9,9 @@
     </style>
     <style name="main_activity_theme" parent="AppTheme">
         <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+    <style name="index_activity_theme" parent="AppTheme">
+        <item name="windowNoTitle">true</item>
     </style>
 </resources>

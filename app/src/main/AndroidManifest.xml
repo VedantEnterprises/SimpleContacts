@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".IndexActivity"
-            android:theme="@style/main_activity_theme"></activity>
+            android:theme="@style/index_activity_theme"></activity>
     </application>
 
 </manifest>
