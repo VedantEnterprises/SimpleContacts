@@ -3,8 +3,82 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <TextView
-        android:text="contacts fragment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:background="#11000000"
+        android:gravity="center_vertical"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <RelativeLayout
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="5dp"
+            android:background="@drawable/search_bar"
+            android:gravity="center_horizontal"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:visibility="gone"
+                android:id="@+id/search_iv"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:src="@drawable/search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:clickable="true"
+                android:layout_toRightOf="@id/search_iv"
+                android:maxLines="1"
+                android:id="@+id/search_et"
+                android:layout_centerVertical="true"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:layout_width="match_parent"/>
+            <TextView
+                android:id="@+id/num_contacts_tv"
+                android:layout_centerVertical="true"
+                android:textSize="16sp"
+                android:drawableLeft="@drawable/search"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:hint="共86个联系人"
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:clickable="true"
+                android:visibility="gone"
+                android:id="@+id/search_clean_iv"
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/search_del_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </RelativeLayout>
+        <TextView
+            android:clickable="true"
+            android:id="@+id/cancel_tv"
+            android:textColor="#ff00ff00"
+            android:visibility="gone"
+            android:layout_alignParentRight="true"
+            android:text="取消"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_contacts"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </android.support.v7.widget.RecyclerView>
+
+    </RelativeLayout>
+
 </LinearLayout>

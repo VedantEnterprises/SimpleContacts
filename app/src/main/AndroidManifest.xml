@@ -18,7 +18,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".IndexActivity"
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:name=".IndexActivity"
             android:theme="@style/index_activity_theme"></activity>
     </application>
 

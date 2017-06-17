@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.cj.simplecontacts.R;
+
 /**
  * Created by chenjun on 2017/6/11.
  */
@@ -27,8 +29,8 @@ public class DialFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "DialFragment onCreateView");
-
-        return super.onCreateView(inflater, container, savedInstanceState);
+        View view = inflater.inflate(R.layout.dial_fragment, null);
+        return view;
     }
 
     @Override

@@ -10,6 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.cj.simplecontacts.R;
+
 /**
  * Created by chenjun on 2017/6/11.
  */
@@ -26,7 +28,8 @@ public class MessageFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "MessageFragment onCreateView");
-        return super.onCreateView(inflater, container, savedInstanceState);
+        View view = inflater.inflate(R.layout.message_fragment, null);
+        return view;
     }
 
     @Override
