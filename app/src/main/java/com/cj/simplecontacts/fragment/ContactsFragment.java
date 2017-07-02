@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
+import com.cj.simplecontacts.view.IndexSiderBar;
 
 /**
  * Created by chenjun on 2017/6/11.
@@ -31,9 +32,11 @@ public class ContactsFragment extends Fragment {
 
     private EditText search_et;
     private TextView num_contacts_tv;
+    private TextView tv_dialog;
     private TextView cancel_search_tv;
     private ImageView search_clean_iv;
     private ImageView search_iv;
+    private IndexSiderBar indexSiderBar;
 
     private Context context;
 
@@ -57,8 +60,10 @@ public class ContactsFragment extends Fragment {
         cancel_search_tv = (TextView) view.findViewById(R.id.cancel_tv);
         search_clean_iv = (ImageView) view.findViewById(R.id.search_clean_iv);
         search_iv = (ImageView) view.findViewById(R.id.search_iv);
+        indexSiderBar = (IndexSiderBar) view.findViewById(R.id.inddex_sider_bar);
+        tv_dialog = (TextView) view.findViewById(R.id.tv_dialog);
 
-
+        indexSiderBar.setTextDialog(tv_dialog);
         setListener();
         return view;
     }
@@ -132,6 +137,13 @@ public class ContactsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 search_et.setText("");
+            }
+        });
+
+        indexSiderBar.setOnTouchingLetterChangedListener(new IndexSiderBar.OnTouchingLetterChangedListener() {
+            @Override
+            public void onTouchingLetterChanged(String s) {
+
             }
         });
     }
