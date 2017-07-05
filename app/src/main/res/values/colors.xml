@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="orange">#FF00FF00</color>
     <color name="blue">#FF0000FF</color>
+    <color name="contact_item_bg_normal">#FFFFFFFF</color>
+    <color name="contact_item_bg_pressed">#08000000</color>
 </resources>

@@ -21,6 +21,8 @@
             android:gravity="center_horizontal"
             android:layout_weight="1"
             android:layout_width="0dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:layout_height="wrap_content">
             <ImageView
                 android:visibility="gone"
@@ -31,6 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <EditText
+                android:layout_marginLeft="1dp"
                 android:clickable="true"
                 android:layout_toRightOf="@id/search_iv"
                 android:maxLines="1"
@@ -40,13 +43,13 @@
                 android:background="@null"
                 android:layout_width="match_parent"/>
             <TextView
+                android:visibility="gone"
                 android:id="@+id/num_contacts_tv"
                 android:layout_centerVertical="true"
                 android:textSize="16sp"
                 android:drawableLeft="@drawable/search"
                 android:layout_centerInParent="true"
                 android:gravity="center"
-                android:hint="共86个联系人"
                 android:layout_gravity="center"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -85,16 +88,19 @@
             android:layout_alignParentRight="true"
             app:textsize="15sp"
             android:id="@+id/inddex_sider_bar"
-            android:layout_width="50dp"
+            android:layout_width="36dp"
             android:layout_height="match_parent" />
         <TextView
+            android:gravity="center"
+            android:background="#55000000"
+            android:textColor="@color/colorAccent"
             android:text="A"
             android:textSize="30sp"
             android:visibility="invisible"
             android:layout_centerInParent="true"
             android:id="@+id/tv_dialog"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="50dp"
+            android:layout_height="50dp" />
     </RelativeLayout>
 
 </LinearLayout>

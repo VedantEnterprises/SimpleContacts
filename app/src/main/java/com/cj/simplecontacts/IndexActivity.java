@@ -2,6 +2,7 @@ package com.cj.simplecontacts;
 
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -89,22 +90,49 @@ public class IndexActivity extends AppCompatActivity {
                 switch (position){
                     case 0:
                         FragmentTransaction transaction0 = fragmentManager.beginTransaction();
-                        transaction0.replace(R.id.fg_container,dialFragment);
+                        Fragment fragment0 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(fragment0 != null){
+                            transaction0.hide(contactsFragment);
+                        }
+                        transaction0.remove(messageFragment);
+                        transaction0.remove(lifeAssistantFragment);
+                        transaction0.add(R.id.fg_container,dialFragment,"dialFragment");
                         transaction0.commit();
                         break;
                     case 1:
                         FragmentTransaction transaction1 = fragmentManager.beginTransaction();
-                        transaction1.replace(R.id.fg_container,contactsFragment);
+                        Fragment fragment1 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(fragment1 != null){
+                            transaction1.show(contactsFragment);
+                        }else {
+                            transaction1.replace(R.id.fg_container, IndexActivity.this.contactsFragment,"contactsFragment");
+                        }
+                        transaction1.remove(dialFragment);
+                        transaction1.remove(messageFragment);
+                        transaction1.remove(lifeAssistantFragment);
+
                         transaction1.commit();
                         break;
                     case 2:
                         FragmentTransaction transaction2 = fragmentManager.beginTransaction();
-                        transaction2.replace(R.id.fg_container,messageFragment);
+                        Fragment fragment2 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(fragment2 != null){
+                            transaction2.hide(contactsFragment);
+                        }
+                        transaction2.remove(dialFragment);
+                        transaction2.remove(lifeAssistantFragment);
+                        transaction2.add(R.id.fg_container,messageFragment,"messageFragment");
                         transaction2.commit();
                         break;
                     case 3:
                         FragmentTransaction transaction3 = fragmentManager.beginTransaction();
-                        transaction3.replace(R.id.fg_container,lifeAssistantFragment);
+                        Fragment fragment3 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(fragment3 != null){
+                            transaction3.hide(contactsFragment);
+                        }
+                        transaction3.remove(dialFragment);
+                        transaction3.remove(messageFragment);
+                        transaction3.add(R.id.fg_container,lifeAssistantFragment,"messageFragment");
                         transaction3.commit();
                         break;
                     default:
@@ -137,6 +165,21 @@ public class IndexActivity extends AppCompatActivity {
     public void finish() {
         //  super.finish();
         moveTaskToBack(true);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(!getSupportActionBar().isShowing()){
+            getSupportActionBar().show();
+            if(contactsFragment != null){
+                contactsFragment.hideCanceTv();
+            }
+        }else if(contactsFragment != null && contactsFragment.checkBoxIsShowing()){
+            contactsFragment.hideCheckbox();
+        }else {
+            super.onBackPressed();
+        }
+
     }
 
     @Override

@@ -15,6 +15,10 @@ import android.widget.TextView;
 
 import com.cj.simplecontacts.R;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 /**
  * Created by chenjun on 2017/6/17.
  */
@@ -57,7 +61,14 @@ public class IndexSiderBar extends View{
         typedArray.recycle();
     }
 
-
+    public void setChooseIndex(String section){
+        ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(letter));
+        int index = arrayList.indexOf(section);
+        if(index != choose){
+            choose = index;
+            invalidate();
+        }
+    }
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -66,8 +77,8 @@ public class IndexSiderBar extends View{
         int width = getWidth();
         sigleHeight = ((float)height)/(letter.length);
         for(int i = 0;i < letter.length;i++){
-            paint.setColor(Color.rgb(33,65,98));
-            paint.setTypeface(Typeface.DEFAULT_BOLD);
+            paint.setColor(Color.argb(255,0,0,0));
+            paint.setTypeface(Typeface.DEFAULT);
             paint.setAntiAlias(true);
             paint.setTextSize(textSize);
             if(i == choose){
@@ -92,7 +103,7 @@ public class IndexSiderBar extends View{
         switch (action){
             case MotionEvent.ACTION_UP:
                 setBackgroundDrawable(new ColorDrawable(0x00000000));
-                choose = -1;
+              //  choose = -1;
                 invalidate();
                 if(mTextDialog != null){
                     mTextDialog.setVisibility(INVISIBLE);
