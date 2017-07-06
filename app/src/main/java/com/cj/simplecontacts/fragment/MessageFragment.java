@@ -7,8 +7,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.cj.simplecontacts.R;
 
@@ -22,6 +26,7 @@ public class MessageFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "MessageFragment onCreate");
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -48,6 +53,53 @@ public class MessageFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "MessageFragment onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.d(TAG,"onCreateOptionsMenu");
+        inflater.inflate(R.menu.menu_message, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        Log.d(TAG,"onOptionsItemSelected");
+
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_msg_clean) {
+            Toast.makeText(getActivity(),"短信清理",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_msg_recycler) {
+            Toast.makeText(getActivity(),"信息回收站",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        if (id == R.id.action_msg_collect) {
+            Toast.makeText(getActivity(),"信息收藏",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_msg_interception) {
+            Toast.makeText(getActivity(),"拦截信息",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_msg_unread) {
+            Toast.makeText(getActivity(),"未读信息",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_msg_settings) {
+            Toast.makeText(getActivity(),"信息设置",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_msg_new) {
+            Toast.makeText(getActivity(),"新建信息",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

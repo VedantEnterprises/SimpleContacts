@@ -17,7 +17,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -27,6 +26,9 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -39,8 +41,8 @@ import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.ContactAdapter;
 import com.cj.simplecontacts.enity.Contact;
-import com.cj.simplecontacts.tool.AndroidTool;
 import com.cj.simplecontacts.tool.CharacterParser;
+import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.view.IndexSiderBar;
 
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ import java.util.ArrayList;
 
 public class ContactsFragment extends Fragment {
     private final static String TAG = "ContactsFragment";
-    private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+
 
     private EditText search_et;
     private TextView num_contacts_tv;
@@ -96,6 +98,7 @@ public class ContactsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "ContactsFragment onCreate");
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -129,25 +132,19 @@ public class ContactsFragment extends Fragment {
     }
 
     private void queryContacts() {
-        if (AndroidTool.isPreM()) {
-            //before 6.0  do not need runtime permission
-            new Thread(runnable).start();
-        } else {
             int permissionCheck = ContextCompat.checkSelfPermission(context,
                     Manifest.permission.READ_CONTACTS);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale((IndexActivity) context,
-                        Manifest.permission.READ_CONTACTS)) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
                     new AlertDialog.Builder(context)
-                            .setMessage("您是否授予访问通讯录的权限？")
+                            .setMessage("您拒绝过授予读取通讯录的权限,但是只有申请该权限,才能查询通讯录,你确定要重新申请获取权限吗？")
                             .setPositiveButton("ok", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                     //again request permission
-                                    ActivityCompat.requestPermissions((IndexActivity) context,
-                                            new String[]{Manifest.permission.READ_CONTACTS},
-                                            MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+                                    ContactsFragment.this.requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
+                                            Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
 
                                 }
                             })
@@ -161,15 +158,14 @@ public class ContactsFragment extends Fragment {
                             .show();
                 }else{
                     // No explanation needed, we can request the permission.
-                    ActivityCompat.requestPermissions((IndexActivity) context,
-                            new String[]{Manifest.permission.READ_CONTACTS},
-                            MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+                    requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
+                            Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
                 }
             } else {
-                Log.d(TAG, "startrunnable");
+             //   Log.d(TAG, "startrunnable");
                 new Thread(runnable).start();
             }
-        }
+
     }
 
     private Runnable runnable = new Runnable() {
@@ -433,14 +429,9 @@ public class ContactsFragment extends Fragment {
                 if(!TextUtils.isEmpty(s)){
                     int section = s.charAt(0);
                     int position = adapter.getPositionForSection(section);
-                    int firstPosition = mLayoutManager.findFirstVisibleItemPosition();
-                    int lastPosition = mLayoutManager.findLastVisibleItemPosition();
                     if(position != -1){
-//                        if(position < firstPosition ||position > lastPosition){
-//                            mRecyclerView.smoothScrollToPosition(position);
-//                        }else{
                             mLayoutManager.scrollToPositionWithOffset(position,0);
-                       // }
+
                     }
                 }
             }
@@ -451,15 +442,15 @@ public class ContactsFragment extends Fragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
+            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     new Thread(runnable).start();
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    Toast.makeText(context, "Permission GRANTED", Toast.LENGTH_SHORT).show();
-                    //   writeDatasToExternalStorage();
+                    Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
+
 
                 } else {
                     // Permission Denied
@@ -475,6 +466,45 @@ public class ContactsFragment extends Fragment {
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.d(TAG,"onCreateOptionsMenu");
+        inflater.inflate(R.menu.menu_contact, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        Log.d(TAG,"onOptionsItemSelected");
+
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_contact_arrange) {
+            Toast.makeText(getActivity(),"联系人整理",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_contact_backup) {
+            Toast.makeText(getActivity(),"联系人备份",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        if (id == R.id.action_contact_recycler) {
+            Toast.makeText(getActivity(),"联系人回收站",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_contact_setting) {
+            Toast.makeText(getActivity(),"联系人设置",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_contact_add) {
+            Toast.makeText(getActivity(),"添加联系人",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void searchContactsByNum(final String key) {

@@ -7,9 +7,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.cj.simplecontacts.R;
 
@@ -23,6 +27,7 @@ public class DialFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "DialFragment onCreate");
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -50,6 +55,43 @@ public class DialFragment extends Fragment {
         Log.d(TAG, "DialFragment onActivityCreated");
         super.onActivityCreated(savedInstanceState);
     }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.d(TAG,"onCreateOptionsMenu");
+        inflater.inflate(R.menu.menu_dail, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        Log.d(TAG,"onOptionsItemSelected");
+
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_dial_clear) {
+            Toast.makeText(getActivity(),"清空通话记录",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_dial_interception) {
+            Toast.makeText(getActivity(),"拦截通话",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        if (id == R.id.action_dial_missed) {
+            Toast.makeText(getActivity(),"未接来电",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.action_dial_setting) {
+            Toast.makeText(getActivity(),"通话设置",Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
 
     @Override
     public void onStart() {
@@ -86,6 +128,7 @@ public class DialFragment extends Fragment {
         Log.d(TAG, "DialFragment onDetach");
         super.onDetach();
     }
+
 
     @Override
     public void onDestroyView() {

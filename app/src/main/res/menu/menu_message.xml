@@ -1,0 +1,45 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="cj.com.actionbar01.MainActivity">
+    <item
+        android:id="@+id/action_msg_clean"
+        android:orderInCategory="100"
+        android:title="短信清理"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_msg_recycler"
+        android:orderInCategory="100"
+        android:title="信息回收站"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_msg_collect"
+        android:orderInCategory="100"
+        android:title="信息收藏"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_msg_interception"
+        android:orderInCategory="100"
+        android:title="拦截信息"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_msg_unread"
+        android:orderInCategory="100"
+        android:title="未读信息"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_msg_settings"
+        android:orderInCategory="100"
+        android:title="信息设置"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_msg_new"
+        android:orderInCategory="100"
+        android:icon="@drawable/add_msg_btn_bg"
+        android:title="新建信息"
+        app:showAsAction="always" />
+
+</menu>

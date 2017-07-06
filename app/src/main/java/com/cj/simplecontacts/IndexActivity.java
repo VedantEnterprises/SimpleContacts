@@ -1,14 +1,24 @@
 package com.cj.simplecontacts;
 
 
+import android.Manifest;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
@@ -16,6 +26,7 @@ import com.cj.simplecontacts.fragment.ContactsFragment;
 import com.cj.simplecontacts.fragment.DialFragment;
 import com.cj.simplecontacts.fragment.LifeAssistantFragment;
 import com.cj.simplecontacts.fragment.MessageFragment;
+import com.cj.simplecontacts.tool.Constant;
 
 public class IndexActivity extends AppCompatActivity {
     private final static String TAG = "IndexActivity";
@@ -31,6 +42,7 @@ public class IndexActivity extends AppCompatActivity {
     private LifeAssistantFragment lifeAssistantFragment;
 
     private FragmentManager fragmentManager;
+    private ActionBar supportActionBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +52,7 @@ public class IndexActivity extends AppCompatActivity {
         initViews();
         setUpFragment();
         setUpBottomNavigationBar();
+        applyPermission();
     }
 
 
@@ -49,6 +62,9 @@ public class IndexActivity extends AppCompatActivity {
         fragement_container = (FrameLayout) findViewById(R.id.fg_container);
 
         setSupportActionBar(toolbar);
+        supportActionBar = getSupportActionBar();
+        supportActionBar.setTitle("轻版通讯录");
+        toolbar.setNavigationIcon(R.drawable.sliding_menu_btn_bg);
     }
 
     private void setUpFragment() {
@@ -104,6 +120,7 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment fragment1 = fragmentManager.findFragmentByTag("contactsFragment");
                         if(fragment1 != null){
                             transaction1.show(contactsFragment);
+
                         }else {
                             transaction1.replace(R.id.fg_container, IndexActivity.this.contactsFragment,"contactsFragment");
                         }
@@ -153,6 +170,39 @@ public class IndexActivity extends AppCompatActivity {
         });
     }
 
+    private void applyPermission(){
+        int permissionCheck = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS);
+        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_CONTACTS)) {
+                new AlertDialog.Builder(this)
+                        .setMessage("您拒绝过授予读取通讯录的权限,但是只有申请该权限,才能查询通讯录,你确定要重新申请获取权限吗？")
+                        .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                //again request permission
+                                ActivityCompat.requestPermissions(IndexActivity.this,
+                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                        Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+
+                            }
+                        })
+                        .setNegativeButton("no", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .create()
+                        .show();
+            }else{
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_CONTACTS},
+                        Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+            }
+        }
+    }
 
     public void hideToolbar(){
         getSupportActionBar().hide();
@@ -181,6 +231,37 @@ public class IndexActivity extends AppCompatActivity {
         }
 
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
+        switch (requestCode) {
+            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+                    //   writeDatasToExternalStorage();
+
+                } else {
+                    // Permission Denied
+                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+    }
+
+
 
     @Override
     protected void onStart() {
@@ -217,4 +298,6 @@ public class IndexActivity extends AppCompatActivity {
         super.onDestroy();
         Log.d(TAG, "IndexActivity onDestroy");
     }
+
+
 }
