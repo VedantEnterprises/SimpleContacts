@@ -46,6 +46,7 @@ import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.view.IndexSiderBar;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by chenjun on 2017/6/11.
@@ -53,7 +54,6 @@ import java.util.ArrayList;
 
 public class ContactsFragment extends Fragment {
     private final static String TAG = "ContactsFragment";
-
 
     private EditText search_et;
     private TextView num_contacts_tv;
@@ -69,11 +69,12 @@ public class ContactsFragment extends Fragment {
     private CharacterParser characterParser;
 
     private Context context;
+    private IndexActivity indexActivity;
     private ContentResolver resolver;
     private ContactAdapter adapter;
 
     private ArrayList<Contact> datas = new ArrayList();
-
+    private boolean isSelectNone = true;
 
     private Handler handler = new Handler() {
         @Override
@@ -86,7 +87,7 @@ public class ContactsFragment extends Fragment {
                     break;
                 case 1:
                     Log.d(TAG, "handleMessage 1");
-                    setUpDatas();
+                    setUpData();
                     break;
                 default:
                     break;
@@ -106,6 +107,24 @@ public class ContactsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "ContactsFragment onCreateView");
         View view = inflater.inflate(R.layout.contacts_fragment, null);
+        initViews(view);
+
+        setUpRecyclerView();
+
+        characterParser = CharacterParser.getInstance();
+        resolver = context.getContentResolver();
+
+        MyContentObserver contentObserver  = new MyContentObserver(handler);
+        resolver.registerContentObserver(ContactsContract.RawContacts.CONTENT_URI,true,contentObserver);
+
+        setListener();
+        queryContacts();
+
+        return view;
+    }
+
+
+    private void initViews(View view) {
         search_et = (EditText) view.findViewById(R.id.search_et);
         num_contacts_tv = (TextView) view.findViewById(R.id.num_contacts_tv);
         cancel_search_tv = (TextView) view.findViewById(R.id.cancel_tv);
@@ -114,22 +133,18 @@ public class ContactsFragment extends Fragment {
         indexSiderBar = (IndexSiderBar) view.findViewById(R.id.inddex_sider_bar);
         tv_dialog = (TextView) view.findViewById(R.id.tv_dialog);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.rv_contacts);
+
+        indexSiderBar.setTextDialog(tv_dialog);
+
+    }
+
+    private void setUpRecyclerView(){
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(context);
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-        characterParser = CharacterParser.getInstance();
-        resolver = context.getContentResolver();
-
-        MyContentObserver contentObserver  = new MyContentObserver(handler);
-        resolver.registerContentObserver(ContactsContract.RawContacts.CONTENT_URI,true,contentObserver);
-
-        indexSiderBar.setTextDialog(tv_dialog);
-        queryContacts();
-        setListener();
-        return view;
     }
+
 
     private void queryContacts() {
             int permissionCheck = ContextCompat.checkSelfPermission(context,
@@ -162,15 +177,15 @@ public class ContactsFragment extends Fragment {
                             Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
                 }
             } else {
-             //   Log.d(TAG, "startrunnable");
                 new Thread(runnable).start();
             }
 
     }
 
-    private Runnable runnable = new Runnable() {
+   /* private Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            Log.d(TAG,"query  start--------------------");
             datas.clear();
             String st = "";
             //"content://com.android.contacts/contacts"  uri
@@ -243,11 +258,105 @@ public class ContactsFragment extends Fragment {
             // Log.d(TAG,"query  st="+st);
             contactsCursor.close();
             handler.sendEmptyMessage(1);
+            Log.d(TAG,"query  end--------------------");
+        }
+
+    };
+*/
+    private Runnable runnable = new Runnable() {
+
+        @Override
+        public void run() {
+            Log.d(TAG,"query  start--------------------");
+            datas.clear();
+            String st = "";
+
+            Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+            int count = contactsCursor.getCount();//get row quantity,  is  contacts quantity
+
+            Message message = handler.obtainMessage();
+            message.what = 0;
+            message.arg1 = count;
+            handler.sendMessage(message);
+
+            st += "共" + count + "个联系人  \n ";
+
+            String sortString = ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY+" asc";//sort by  [A-Z]
+            String selection = ContactsContract.RawContacts.ACCOUNT_TYPE+" = ?";
+            String[] selectionArgs = {"com.android.localphone"};
+
+            String[] projection = {
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                    ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID,
+                    "phonebook_label",
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.Contacts.DISPLAY_NAME};
+
+            Cursor phone = resolver.query(
+                                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                            projection,
+                                            selection,
+                                            selectionArgs, sortString);
+            st += "----------------------------------------------- \n";
+            while (phone.moveToNext()) {
+
+                Contact contact = new Contact();
+
+                String contactID = phone
+                        .getString(phone
+                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+                String phonebook_label = phone
+                        .getString(phone
+                                .getColumnIndex("phonebook_label"));
+                String name = phone
+                        .getString(phone
+                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                name = name.trim();
+
+                String rawContactsId = phone
+                        .getString(phone
+                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID));
+
+                String number = phone
+                        .getString(phone
+                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                // 对手机号码进行预处理（去掉号码前的+86、首尾空格、“-”号等）
+                number = number.replaceAll("^(\\+86)", "");
+                number = number.replaceAll("^(86)", "");
+                number = number.replaceAll("-", "");
+                number = number.replaceAll(" ", "");
+                number = number.trim();
+
+                st += "contactID:" + contactID + "\n";
+                st += "name:" + name + "\n";
+                st += "phonebook_label:" + phonebook_label + "\n";
+                st += "rawContactsId:" + rawContactsId + "\n";
+                st += "number:" + number + "\n";
+
+                contact.setContactID(contactID);
+                contact.setPhonebookLabel(phonebook_label);
+                contact.setName(name);
+                contact.setContactAccountID(rawContactsId);
+                contact.getNumbers().add(number);
+
+                if(datas.contains(contact)){
+                    contact.getNumbers().add(number);
+                }else{
+                    datas.add(contact);
+                }
+            }
+            st += "----------------------------------------------- \n";
+           //  Log.d(TAG,"query  st="+st);
+            contactsCursor.close();
+            handler.sendEmptyMessage(1);
+            Log.d(TAG,"query  end--------------------");
         }
 
     };
 
-    private void setUpDatas() {
+
+
+    private void setUpData() {
         for (int i = 0; i < datas.size(); i++) {
             Contact c = datas.get(i);
             if (c != null) {
@@ -255,29 +364,33 @@ public class ContactsFragment extends Fragment {
                 c.setPinying(pinyin);
             }
         }
+
         adapter = new ContactAdapter(datas, context);
+
         adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
             @Override
-            public void onItemClik(int position) {
-
+            public void onItemClick(int position) {
+                HideSoftInput();
             }
 
             @Override
             public void onItemChecked(int position) {
-
-                // tv1.setText("一共选择了"+adapter.getCheckedCount()+"个");
-
+                indexActivity.notifyCheckedItem(adapter.getCheckedCount());
+                HideSoftInput();
             }
 
             @Override
-            public void onLongClik(int position) {
-                // tv1.setVisibility(View.VISIBLE);
-                //  checkBox.setVisibility(View.VISIBLE);
-                //  supportActionBar.setDisplayShowTitleEnabled(false);
-                // supportActionBar.setDisplayHomeAsUpEnabled(true);
+            public void onLongClick(int position) {
+                HideSoftInput();
+                indexActivity.showToolbar();
+                hideCancelTv();
+                indexActivity.showActionMode();
+                isSelectNone = true;
             }
         });
+
         adapter.setAllItemChecked(false);
+
         mRecyclerView.setAdapter(adapter);
 
 
@@ -285,25 +398,36 @@ public class ContactsFragment extends Fragment {
             @Override
             public void onChildViewAttachedToWindow(View view) {
                 Log.d(TAG,"RecyclerView  onChildViewAttachedToWindow");
-//                RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
-//                if (layoutManager instanceof LinearLayoutManager) {
-//                    LinearLayoutManager linearManager = (LinearLayoutManager) layoutManager;
 
                     int firstPosition = mLayoutManager.findFirstVisibleItemPosition();
-                    //Log.d(TAG,"RecyclerView  onChildViewAttachedToWindow firstPosition="+firstPosition);
                     if(firstPosition >= 0){
                         int section = adapter.getSectionForPosition(firstPosition);
                         indexSiderBar.setChooseIndex((char)(section)+"");
                     }
-               // }
             }
-
             @Override
             public void onChildViewDetachedFromWindow(View view) {
 
             }
         });
 
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                HideSoftInput();
+            }
+        });
+
+    }
+
+    public void setSelectMode(boolean isSelectNone){
+        this.isSelectNone = isSelectNone;
+        adapter.setAllItemChecked(!isSelectNone);
+    }
+
+    public boolean isSelectNone(){
+        return this.isSelectNone;
     }
 
     private class MyContentObserver extends ContentObserver{
@@ -315,51 +439,69 @@ public class ContactsFragment extends Fragment {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-            Log.d(TAG,"onChange  selfChange="+selfChange);
+           // Log.d(TAG,"onChange  selfChange="+selfChange);
             new Thread(runnable).start();
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
-            Log.d(TAG,"onChange  uri="+uri.toString());
+           // Log.d(TAG,"onChange  uri="+uri.toString());
         }
     }
-    public void hideCanceTv(){
-        if(num_contacts_tv == null|| cancel_search_tv == null || search_iv == null ){
+
+    /**
+     * 按back key 如果此时toolbar is hide   then show toolbar meanwhile hide some view
+     */
+    public void hideCancelTv(){
+        if(num_contacts_tv == null|| cancel_search_tv == null || search_iv == null || search_clean_iv == null|| search_et == null){
             return;
         }
         num_contacts_tv.setVisibility(View.VISIBLE);
         cancel_search_tv.setVisibility(View.GONE);
         search_iv.setVisibility(View.GONE);
+        search_clean_iv.setVisibility(View.GONE);
+        search_et.setText("");
         search_et.setCursorVisible(false);
+        mLayoutManager.scrollToPositionWithOffset(0,0);
     }
+
+    /**
+     *
+     */
+    public void hideCheckBox(){
+        adapter.setShowCheckBox(false);
+        adapter.setAllItemChecked(false);
+    }
+
+
     private void setListener() {
         search_et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    ((IndexActivity) getActivity()).hideToolbar();
+                    indexActivity.hideToolbar();
                     num_contacts_tv.setVisibility(View.GONE);
                     cancel_search_tv.setVisibility(View.VISIBLE);
                     search_iv.setVisibility(View.VISIBLE);
                 } else {
-                    ((IndexActivity) getActivity()).showToolbar();
+                    indexActivity.showToolbar();
                     num_contacts_tv.setVisibility(View.VISIBLE);
                     cancel_search_tv.setVisibility(View.GONE);
                     search_iv.setVisibility(View.GONE);
                 }
             }
         });
+
         search_et.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                Log.d(TAG, "beforeTextChanged");
+                //Log.d(TAG, "beforeTextChanged");
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Log.d(TAG, "onTextChanged");
+                //Log.d(TAG, "onTextChanged");
                 String string = search_et.getText().toString();
                 if (TextUtils.isEmpty(string)) {
                     search_iv.setVisibility(View.GONE);
@@ -375,9 +517,7 @@ public class ContactsFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 String key = s.toString().trim();
-                Log.d(TAG, "afterTextChanged  s=" + key);
-
-
+                //Log.d(TAG, "afterTextChanged  s=" + key);
                 int num = 0;
                 //if num  search by phone num
                 try {
@@ -386,7 +526,7 @@ public class ContactsFragment extends Fragment {
                     searchContactsByNum(num + "");
                 } catch (NumberFormatException exception) {
                     //not num   by name
-                    Log.d(TAG, "afterTextChanged  not num");
+                   // Log.d(TAG, "afterTextChanged  not num");
                     searchContactsByName(key);
                 }
             }
@@ -395,27 +535,27 @@ public class ContactsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 search_et.setCursorVisible(true);
-                ((IndexActivity) getActivity()).hideToolbar();
+                indexActivity.hideToolbar();
                 num_contacts_tv.setVisibility(View.GONE);
                 cancel_search_tv.setVisibility(View.VISIBLE);
                 search_iv.setVisibility(View.VISIBLE);
             }
         });
+
         cancel_search_tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((IndexActivity) getActivity()).showToolbar();
+                indexActivity.showToolbar();
                 num_contacts_tv.setVisibility(View.VISIBLE);
                 cancel_search_tv.setVisibility(View.GONE);
                 search_iv.setVisibility(View.GONE);
                 search_et.setText("");
                 search_clean_iv.setVisibility(View.GONE);
                 search_et.setCursorVisible(false);
-                InputMethodManager imm = (InputMethodManager)
-                        context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                HideSoftInput();
             }
         });
+
         search_clean_iv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -438,35 +578,6 @@ public class ContactsFragment extends Fragment {
         });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
-        switch (requestCode) {
-            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    new Thread(runnable).start();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
-
-
-                } else {
-                    // Permission Denied
-                    Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show();
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -507,6 +618,11 @@ public class ContactsFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+
+    /**
+     * 通过电话号码查询
+     * @param key
+     */
     private void searchContactsByNum(final String key) {
         Log.d(TAG, "searchContactsByNum  key=" + key);
         ArrayList<Contact> temp = new ArrayList();
@@ -537,6 +653,10 @@ public class ContactsFragment extends Fragment {
         }
     }
 
+    /**
+     * 通过姓名查询
+     * @param key
+     */
     private void searchContactsByName(final String key) {
         if (!TextUtils.isEmpty(key)) {
             mLayoutManager.scrollToPositionWithOffset(0,0);
@@ -565,18 +685,46 @@ public class ContactsFragment extends Fragment {
         }
     }
 
-    public boolean checkBoxIsShowing(){
-        if(adapter != null){
-            return adapter.isShowCheckBox();
+
+    /**
+     * 隐藏软键盘
+     */
+    public void HideSoftInput(){
+        InputMethodManager imm =  (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(imm != null) {
+            imm.hideSoftInputFromWindow(indexActivity.getWindow().getDecorView().getWindowToken(),
+                    0);
         }
-        return false;
     }
 
-    public void hideCheckbox(){
-        if(adapter != null){
-            adapter.setShowCheckBox(false);
-            adapter.setAllItemChecked(false);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
+        switch (requestCode) {
+            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    new Thread(runnable).start();
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    //Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+
+                } else {
+                    // Permission Denied
+                    // Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
     }
 
     @Override
@@ -590,6 +738,7 @@ public class ContactsFragment extends Fragment {
         Log.d(TAG, "ContactsFragment onAttach context");
         super.onAttach(context);
         this.context = context;
+        this.indexActivity = (IndexActivity) context;
     }
 
     @Override

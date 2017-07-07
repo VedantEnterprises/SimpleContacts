@@ -59,7 +59,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     return;
                 }
                 if(listener != null){
-                    listener.onItemClik(position);
+                    listener.onItemClick(position);
                 }
                // Toast.makeText(context,"点击 pos="+position,Toast.LENGTH_SHORT).show();
 
@@ -73,7 +73,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     return true;
                 }
                 if(listener != null){
-                    listener.onLongClik(position);
+                    listener.onLongClick(position);
                 }
                 //Toast.makeText(context,"长按",Toast.LENGTH_SHORT).show();
                 isShowCheckBox = isShowCheckBox?isShowCheckBox:true;
@@ -121,7 +121,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 //Log.d("test","name:"+c.getName());
                 for(int i=0;i<list.size();i++){
                     Integer integer = list.get(i);
-                    Log.d("test","integer"+integer.intValue());
+                 //   Log.d("test","integer"+integer.intValue());
                     ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorPrimaryDark));
                     builder.setSpan(redSpan, integer.intValue()-1, integer.intValue(),
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -241,8 +241,8 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
         this.listener = listener;
     }
     public interface ReclerViewItemListener{
-        void onItemClik(int position);
-        void onLongClik(int position);
+        void onItemClick(int position);
+        void onLongClick(int position);
         void onItemChecked(int position);
     }
 

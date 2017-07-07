@@ -84,7 +84,7 @@ public class Contact {
             return lsit;
         }
         char ch = str.charAt(0);
-        Log.d("test","getKeyIndexList ch="+(int)ch+"\n");
+      //  Log.d("test","getKeyIndexList ch="+(int)ch+"\n");
         if((ch >= 'a' && ch <='z')|| (ch >= 'A' && ch <='Z')){
             //if search by letter
            // Log.d("test","getKeyIndexList letter \n");
@@ -128,4 +128,25 @@ public class Contact {
         return lsit;
     }
 
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 37 * result + (null == this.contactID ? 0 : this.contactID.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (null == obj) {
+            return false;
+        }
+        if (obj instanceof Contact) {
+            Contact c = (Contact) obj;
+            return this.contactID.equals(c.getContactID());
+        }
+        return false;
+    }
 }

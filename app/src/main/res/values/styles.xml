@@ -7,21 +7,37 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+    <!--main activity theme-->
     <style name="main_activity_theme" parent="AppTheme">
         <item name="windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
     </style>
+    <!--index activity theme-->
     <style name="index_activity_theme" parent="AppTheme">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-    </style>
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
+        <item name="windowActionModeOverlay">true</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="actionModeStyle">@style/CustomActionMode</item>
+
+    </style>
+
+    <style name="CustomActionMode" parent="@style/Widget.AppCompat.ActionMode">
+        <item name="background">@color/colorPrimary</item>
+        <item name="height">?attr/actionBarSize</item>
+    </style>
+
+    <!--AppBarLayout theme-->
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <!--toolbar popupTheme-->
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" >
         <item name="overlapAnchor">false</item>
     </style>
+    <!--toolbar style-->
     <style name="NoSpaceActionBarTheme" parent="Base.Widget.AppCompat.Toolbar">
         <item name="contentInsetStart">0dp</item>
         <item name="contentInsetStartWithNavigation">0dp</item>
     </style>
+
 </resources>

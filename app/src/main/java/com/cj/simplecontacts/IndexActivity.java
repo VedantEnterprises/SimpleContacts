@@ -14,9 +14,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -33,16 +35,16 @@ public class IndexActivity extends AppCompatActivity {
 
 
     private BottomNavigationBar bottomNavigationBar;
-    private FrameLayout fragement_container;
     private Toolbar toolbar;
-
+    private ActionBar supportActionBar;
+    private ActionMode actionMode;
     private DialFragment dialFragment;
     private ContactsFragment contactsFragment;
     private MessageFragment messageFragment;
     private LifeAssistantFragment lifeAssistantFragment;
 
     private FragmentManager fragmentManager;
-    private ActionBar supportActionBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +61,6 @@ public class IndexActivity extends AppCompatActivity {
     private void initViews() {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
-        fragement_container = (FrameLayout) findViewById(R.id.fg_container);
 
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
@@ -170,6 +171,9 @@ public class IndexActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 6.0 运行时权限申请
+     */
     private void applyPermission(){
         int permissionCheck = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_CONTACTS);
@@ -204,13 +208,31 @@ public class IndexActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 隐藏toolbar
+     */
     public void hideToolbar(){
         getSupportActionBar().hide();
     }
 
+    /**
+     * 显示toolbar
+     */
     public void showToolbar(){
         getSupportActionBar().show();
     }
+
+    /**
+     * 长按联系人列表 item  进入ActionMode
+     */
+    public void showActionMode(){
+        if (actionMode != null) {
+            return ;
+        }
+        actionMode = startSupportActionMode(new MyCallback());
+        actionMode.setTitle("已选(0)个");
+    }
+
     @Override
     public void finish() {
         //  super.finish();
@@ -219,14 +241,13 @@ public class IndexActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(!getSupportActionBar().isShowing()){
-            getSupportActionBar().show();
+        if(!supportActionBar.isShowing()){
+            Log.d(TAG, "onBackPressed");
+            supportActionBar.show();
             if(contactsFragment != null){
-                contactsFragment.hideCanceTv();
+                contactsFragment.hideCancelTv();
             }
-        }else if(contactsFragment != null && contactsFragment.checkBoxIsShowing()){
-            contactsFragment.hideCheckbox();
-        }else {
+        }else{
             super.onBackPressed();
         }
 
@@ -262,6 +283,60 @@ public class IndexActivity extends AppCompatActivity {
     }
 
 
+    private class MyCallback implements ActionMode.Callback {
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.action_mode_menu, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int id = item.getItemId();
+            Log.d(TAG,"onCheckedChanged  item = "+item.getItemId()+" "+item.getTitle());
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_multi_none_select) {
+               // Toast.makeText(IndexActivity.this,"单选复选",Toast.LENGTH_SHORT).show();
+                if(contactsFragment != null){
+                    if(contactsFragment.isSelectNone()){
+                        contactsFragment.setSelectMode(false);
+                        item.setIcon(R.drawable.iab_multi_select);
+                    }else {
+                        contactsFragment.setSelectMode(true);
+                        item.setIcon(R.drawable.iab_multi_none_select);
+                    }
+                }
+                return true;
+            }
+            // mode.finish();
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            Log.d(TAG,"onDestroyActionMode = ");
+            if(contactsFragment != null){
+                contactsFragment.hideCheckBox();
+            }
+            actionMode = null;
+        }
+    }
+
+    /**
+     * 长按联系人列表 item  选择某个item时 通知选中的个数
+     * @param count
+     */
+    public void notifyCheckedItem(int count){
+        if(actionMode != null){
+            actionMode.setTitle("已选("+count+")个");
+        }
+    }
 
     @Override
     protected void onStart() {
