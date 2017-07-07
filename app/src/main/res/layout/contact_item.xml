@@ -16,7 +16,6 @@
         android:clickable="true"
         android:id="@+id/ll"
         android:paddingTop="10dp"
-        android:gravity="center_vertical"
         android:paddingLeft="20dp"
         android:orientation="horizontal"
         android:layout_width="match_parent"

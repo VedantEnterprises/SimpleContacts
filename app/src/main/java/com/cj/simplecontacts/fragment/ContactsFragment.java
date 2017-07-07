@@ -182,87 +182,6 @@ public class ContactsFragment extends Fragment {
 
     }
 
-   /* private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            Log.d(TAG,"query  start--------------------");
-            datas.clear();
-            String st = "";
-            //"content://com.android.contacts/contacts"  uri
-            String sortString = ContactsContract.Contacts.SORT_KEY_PRIMARY + " asc";//sort by  [A-Z]
-            Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, sortString);
-            int count = contactsCursor.getCount();//get row quantity,  is  contacts quantity
-
-            Message message = handler.obtainMessage();
-            message.what = 0;
-            message.arg1 = count;
-            handler.sendMessage(message);
-
-            st += "共" + count + "个联系人  \n ";
-
-            while (contactsCursor.moveToNext()) {
-                st += "----------------------------------------------- \n";
-                Contact contacts = new Contact();
-                String contactID = contactsCursor.getString(contactsCursor.getColumnIndex(ContactsContract.Contacts._ID));
-                String name = contactsCursor.getString(contactsCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                String phonebook_label = contactsCursor.getString(contactsCursor.getColumnIndex("phonebook_label"));
-                //hasPhoneNum is 1 indicate have phone num
-                int hasPhoneNum = contactsCursor.getInt(contactsCursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
-
-                contacts.setContactID(contactID);
-                contacts.setName(name);
-                contacts.setPhonebookLabel(phonebook_label);
-
-                st += "contactID:" + contactID + "\n";
-                st += "name:" + name + "\n";
-                st += "phonebook_label:" + phonebook_label + "\n";
-                st += "hasPhoneNum:" + hasPhoneNum + "\n";
-
-                //on contact maybe belong to more than one account   eg:weixin  qq  there just mind the com.android.localphone account
-                String selection = ContactsContract.RawContacts.CONTACT_ID + " = ? and " + ContactsContract.RawContacts.ACCOUNT_TYPE + " = ?";
-                String[] selectionArgs = {contactID, "com.android.localphone"};
-
-                Cursor rawContactsCursor = resolver.query(ContactsContract.RawContacts.CONTENT_URI, null, selection, selectionArgs, null);
-
-                String rawContactsId = "";
-                if (rawContactsCursor.moveToFirst()) {
-                    rawContactsId = rawContactsCursor.getString(rawContactsCursor.getColumnIndex(ContactsContract.RawContacts._ID));
-                }
-                contacts.setContactAccountID(rawContactsId);
-                rawContactsCursor.close();
-
-                st += "---------- \n";
-                st += "rawContactsId:" + rawContactsId + "\n";
-
-                // get phone nums
-                if (hasPhoneNum > 0) {
-                    //"content://com.android.contacts/data/phones"
-                    Cursor PhoneCur = resolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID + " = ?",
-                            new String[]{rawContactsId}, null);
-                    while (PhoneCur.moveToNext()) {
-                        String number = PhoneCur.getString(PhoneCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
-                        contacts.getNumbers().add(number.replace(" ", ""));
-                        st += "~~~~ \n";
-                        st += "number:" + number + "\n";
-                    }
-                    st += "~~~~ \n";
-                    PhoneCur.close();
-                }
-                st += "---------- \n";
-                datas.add(contacts);
-            }
-            st += "----------------------------------------------- \n";
-            // Log.d(TAG,"query  st="+st);
-            contactsCursor.close();
-            handler.sendEmptyMessage(1);
-            Log.d(TAG,"query  end--------------------");
-        }
-
-    };
-*/
     private Runnable runnable = new Runnable() {
 
         @Override
@@ -273,7 +192,7 @@ public class ContactsFragment extends Fragment {
 
             Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
             int count = contactsCursor.getCount();//get row quantity,  is  contacts quantity
-
+            contactsCursor.close();
             Message message = handler.obtainMessage();
             message.what = 0;
             message.arg1 = count;
@@ -347,7 +266,7 @@ public class ContactsFragment extends Fragment {
             }
             st += "----------------------------------------------- \n";
            //  Log.d(TAG,"query  st="+st);
-            contactsCursor.close();
+            phone.close();
             handler.sendEmptyMessage(1);
             Log.d(TAG,"query  end--------------------");
         }

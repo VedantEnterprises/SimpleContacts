@@ -20,7 +20,7 @@
         <item name="windowActionModeOverlay">true</item>
         <item name="windowActionBarOverlay">true</item>
         <item name="actionModeStyle">@style/CustomActionMode</item>
-
+        <item name="actionOverflowMenuStyle">@style/OverflowMenuStyle</item>
     </style>
 
     <style name="CustomActionMode" parent="@style/Widget.AppCompat.ActionMode">
@@ -38,6 +38,10 @@
     <style name="NoSpaceActionBarTheme" parent="Base.Widget.AppCompat.Toolbar">
         <item name="contentInsetStart">0dp</item>
         <item name="contentInsetStartWithNavigation">0dp</item>
+    </style>
+
+    <style name="OverflowMenuStyle" parent="@style/Widget.AppCompat.Light.PopupMenu.Overflow">
+       <item name="android:dropDownVerticalOffset">5dip</item>
     </style>
 
 </resources>
