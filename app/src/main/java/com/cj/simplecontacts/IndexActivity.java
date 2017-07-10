@@ -304,11 +304,11 @@ public class IndexActivity extends AppCompatActivity {
             if (id == R.id.action_multi_none_select) {
                // Toast.makeText(IndexActivity.this,"单选复选",Toast.LENGTH_SHORT).show();
                 if(contactsFragment != null){
-                    if(contactsFragment.isSelectNone()){
-                        contactsFragment.setSelectMode(false);
+                    if(contactsFragment.isAllSelected()){
+                        contactsFragment.setAllSelected(false);
                         item.setIcon(R.drawable.iab_multi_select);
                     }else {
-                        contactsFragment.setSelectMode(true);
+                        contactsFragment.setAllSelected(true);
                         item.setIcon(R.drawable.iab_multi_none_select);
                     }
                 }
@@ -332,9 +332,15 @@ public class IndexActivity extends AppCompatActivity {
      * 长按联系人列表 item  选择某个item时 通知选中的个数
      * @param count
      */
-    public void notifyCheckedItem(int count){
+    public void notifyCheckedItem(int count,boolean isAllSelected){
         if(actionMode != null){
             actionMode.setTitle("已选("+count+")个");
+            MenuItem item = actionMode.getMenu().findItem(R.id.action_multi_none_select);
+            if(!isAllSelected ){
+                item.setIcon(R.drawable.iab_multi_select);
+            }else{
+                item.setIcon(R.drawable.iab_multi_none_select);
+            }
         }
     }
 

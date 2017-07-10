@@ -6,7 +6,7 @@
     <item
         android:id="@+id/action_multi_none_select"
         android:orderInCategory="100"
-        android:icon="@drawable/iab_multi_none_select"
+        android:icon="@drawable/iab_multi_select"
         android:title="全不选"
         app:showAsAction="always" />
 </menu>

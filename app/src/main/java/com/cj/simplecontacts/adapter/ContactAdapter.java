@@ -73,7 +73,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     return true;
                 }
                 if(listener != null){
-                    listener.onLongClick(position);
+                    listener.onLongClick(position,v);
                 }
                 //Toast.makeText(context,"长按",Toast.LENGTH_SHORT).show();
                 isShowCheckBox = isShowCheckBox?isShowCheckBox:true;
@@ -88,7 +88,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     Log.d("test","onCheckedChanged pos="+position+"  isChecked="+isChecked);
                     c.setChecked(isChecked);
                     if(listener != null){
-                        listener.onItemChecked(position);
+                        listener.onItemChecked(position,buttonView);
                     }
                 }
             });
@@ -242,8 +242,8 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
     }
     public interface ReclerViewItemListener{
         void onItemClick(int position);
-        void onLongClick(int position);
-        void onItemChecked(int position);
+        void onLongClick(int position,View v);
+        void onItemChecked(int position,View v);
     }
 
     public  class ViewHolder extends RecyclerView.ViewHolder {

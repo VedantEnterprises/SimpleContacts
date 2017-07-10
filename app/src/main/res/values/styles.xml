@@ -44,4 +44,10 @@
        <item name="android:dropDownVerticalOffset">5dip</item>
     </style>
 
+    <style name="PopupAnimation" parent="android:Animation">
+
+        <item name="android:windowEnterAnimation">@anim/pop_enter</item>
+        <item name="android:windowExitAnimation">@anim/pop_out</item>
+    </style>
+
 </resources>

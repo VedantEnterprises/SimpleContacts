@@ -8,6 +8,9 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,18 +28,24 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ashokvarma.bottomnavigation.BottomNavigationBar;
+import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.ContactAdapter;
@@ -52,7 +61,7 @@ import java.util.List;
  * Created by chenjun on 2017/6/11.
  */
 
-public class ContactsFragment extends Fragment {
+public class ContactsFragment extends Fragment implements View.OnClickListener{
     private final static String TAG = "ContactsFragment";
 
     private EditText search_et;
@@ -74,7 +83,7 @@ public class ContactsFragment extends Fragment {
     private ContactAdapter adapter;
 
     private ArrayList<Contact> datas = new ArrayList();
-    private boolean isSelectNone = true;
+    private boolean isAllSelected = false;
 
     private Handler handler = new Handler() {
         @Override
@@ -293,18 +302,26 @@ public class ContactsFragment extends Fragment {
             }
 
             @Override
-            public void onItemChecked(int position) {
-                indexActivity.notifyCheckedItem(adapter.getCheckedCount());
+            public void onItemChecked(int position,View v) {
+                int checkedCount = adapter.getCheckedCount();
+                if(checkedCount == adapter.getItemCount()){
+                    isAllSelected = true;
+                }else{
+                    isAllSelected = false;
+                }
+                indexActivity.notifyCheckedItem(checkedCount,isAllSelected);
                 HideSoftInput();
+                notifyPop(checkedCount);
             }
 
             @Override
-            public void onLongClick(int position) {
+            public void onLongClick(int position,View v) {
                 HideSoftInput();
                 indexActivity.showToolbar();
                 hideCancelTv();
                 indexActivity.showActionMode();
-                isSelectNone = true;
+                isAllSelected = false;
+                showPop(v);
             }
         });
 
@@ -339,14 +356,133 @@ public class ContactsFragment extends Fragment {
         });
 
     }
+    private PopupWindow popupWindow;
+    private View popupView;
+    private FrameLayout fl1;
+    private FrameLayout fl2;
+    private FrameLayout fl3;
+    private FrameLayout fl4;
+    private TextView add_blacklist;
+    private TextView send_msg;
+    private TextView share;
+    private TextView delete;
 
-    public void setSelectMode(boolean isSelectNone){
-        this.isSelectNone = isSelectNone;
-        adapter.setAllItemChecked(!isSelectNone);
+    private void notifyPop(int checkedCount){
+        if(checkedCount>0){
+            fl1.setClickable(true);
+            fl2.setClickable(true);
+            fl3.setClickable(true);
+            fl4.setClickable(true);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_msg_icon);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            send_msg.setCompoundDrawables(null,msgDrawable,null,null);
+            send_msg.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable shareDrawable = getResources().getDrawable(R.drawable.mca_share_icon);
+            shareDrawable.setBounds(0, 0, shareDrawable.getMinimumWidth(), shareDrawable.getMinimumHeight());
+            share.setCompoundDrawables(null,shareDrawable,null,null);
+            share.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+        }else{
+            fl1.setClickable(false);
+            fl2.setClickable(false);
+            fl3.setClickable(false);
+            fl4.setClickable(false);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon_disabled);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_msg_icon_disabled);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            send_msg.setCompoundDrawables(null,msgDrawable,null,null);
+            send_msg.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable shareDrawable = getResources().getDrawable(R.drawable.mca_share_icon_disabled);
+            shareDrawable.setBounds(0, 0, shareDrawable.getMinimumWidth(), shareDrawable.getMinimumHeight());
+            share.setCompoundDrawables(null,shareDrawable,null,null);
+            share.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del_disabled);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+        }
+        popupWindow.update();
     }
 
-    public boolean isSelectNone(){
-        return this.isSelectNone;
+    private void showPop(View view){
+        //show popwindow
+        popupView = indexActivity.getLayoutInflater().inflate(R.layout.popwindow, null);
+        fl1 = (FrameLayout) popupView.findViewById(R.id.fl1);
+        fl2 = (FrameLayout) popupView.findViewById(R.id.fl2);
+        fl3 = (FrameLayout) popupView.findViewById(R.id.fl3);
+        fl4 = (FrameLayout) popupView.findViewById(R.id.fl4);
+
+
+
+        add_blacklist = (TextView) popupView.findViewById(R.id.add_blacklist);
+        send_msg = (TextView) popupView.findViewById(R.id.send_msg);
+        share = (TextView) popupView.findViewById(R.id.share);
+        delete = (TextView) popupView.findViewById(R.id.delete);
+
+        fl1.setOnClickListener(this);
+        fl2.setOnClickListener(this);
+        fl3.setOnClickListener(this);
+        fl4.setOnClickListener(this);
+
+        fl1.setClickable(false);
+        fl2.setClickable(false);
+        fl3.setClickable(false);
+        fl4.setClickable(false);
+
+        popupWindow  = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,true);
+        popupWindow.setFocusable(false);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.showAtLocation(view,Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM, 0, 0);
+
+
+    }
+
+    public void setAllSelected(boolean isAllSelected){
+        this.isAllSelected = isAllSelected;//isSelectNone  fasle  当前已经全部选中
+        adapter.setAllItemChecked(isAllSelected);
+    }
+
+    public boolean isAllSelected(){
+        return this.isAllSelected;
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.fl1:
+                Toast.makeText(context,"加入黑名单",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl2:
+                Toast.makeText(context,"发信息",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl3:
+                Toast.makeText(context,"分享",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl4:
+                Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                break;
+        }
     }
 
     private class MyContentObserver extends ContentObserver{
@@ -391,6 +527,9 @@ public class ContactsFragment extends Fragment {
     public void hideCheckBox(){
         adapter.setShowCheckBox(false);
         adapter.setAllItemChecked(false);
+        if(popupWindow != null){
+            popupWindow.dismiss();
+        }
     }
 
 
