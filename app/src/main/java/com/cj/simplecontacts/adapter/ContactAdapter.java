@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.enity.Contact;
+import com.cj.simplecontacts.tool.Constant;
 
 import java.util.ArrayList;
 
@@ -45,29 +47,55 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
         ViewHolder vh = new ViewHolder(v);
         return vh;
     }
-
+    boolean isPressed = false;
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Contact c = list.get(position);
-        //根据position获取分类的首字母的char ascii值
-        int section = getSectionForPosition(position);
+        holder.ll.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()){
+                    case MotionEvent.ACTION_UP:
+                        if(isPressed){
+                           // Toast.makeText(context,"长按松开:"+c.getName(),Toast.LENGTH_SHORT).show();
+                            if(listener != null){
+                                listener.onLongClick(position,view);
+                            }
+                            isPressed = false;
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
         holder.ll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isShowCheckBox){
-                    holder.cb.setChecked(!holder.cb.isChecked());
-                    return;
+
+                if(c.isContact()){
+                    if(isShowCheckBox){
+                        holder.cb.setChecked(!holder.cb.isChecked());
+                        return;
+                    }
+                }else {
+
+                   // Toast.makeText(context,"点击"+c.getName(),Toast.LENGTH_SHORT).show();
                 }
                 if(listener != null){
                     listener.onItemClick(position);
                 }
-               // Toast.makeText(context,"点击 pos="+position,Toast.LENGTH_SHORT).show();
+                // Toast.makeText(context,"点击 pos="+position,Toast.LENGTH_SHORT).show();
 
             }
         });
         holder.ll.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                if(!c.isContact()){
+                    Toast.makeText(context,"长按"+c.getName(),Toast.LENGTH_SHORT).show();
+                    isPressed = true;
+                    return true;
+                }
                 if(isShowCheckBox){
                     holder.cb.setChecked(!holder.cb.isChecked());
                     return true;
@@ -81,11 +109,35 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 return true;
             }
         });
-        if(c != null){
+
+        if(!c.isContact()){//联系人助手  和 我的分组
+            holder.number.setVisibility(View.GONE);
+            holder.section.setVisibility(View.GONE);
+            holder.cb.setVisibility(View.GONE);
+
+            holder.name.setText(c.getName());
+            if(Constant.CONTACT_ASSISTANT.equals(c.getName())){
+                holder.helper.setVisibility(View.VISIBLE);
+                holder.photo.setImageResource(R.drawable.ic_contact_sort);
+            }else if(Constant.CONTACT_GROUP.equals(c.getName())){
+                holder.photo.setImageResource(R.drawable.ic_contact_group);
+                holder.helper.setVisibility(View.GONE);
+            }
+        }else{
+
+            holder.number.setVisibility(View.VISIBLE);
+            holder.section.setVisibility(View.VISIBLE);
+            holder.cb.setVisibility(View.VISIBLE);
+            holder.helper.setVisibility(View.GONE);
+            holder.photo.setImageResource(R.drawable.default_contact_head_icon);
+
+            //根据position获取分类的首字母的char ascii值
+            int section = getSectionForPosition(position);
+
             holder.cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    Log.d("test","onCheckedChanged pos="+position+"  isChecked="+isChecked);
+                  //  Log.d("test","onCheckedChanged pos="+position+"  isChecked="+isChecked);
                     c.setChecked(isChecked);
                     if(listener != null){
                         listener.onItemChecked(position,buttonView);
@@ -114,6 +166,8 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
 
             SpannableStringBuilder builder = new SpannableStringBuilder(
                     c.getName());
+
+
             if(TextUtils.isEmpty(key)){
                 holder.name.setText(c.getName());
             }else {
@@ -121,7 +175,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 //Log.d("test","name:"+c.getName());
                 for(int i=0;i<list.size();i++){
                     Integer integer = list.get(i);
-                 //   Log.d("test","integer"+integer.intValue());
+                    //   Log.d("test","integer"+integer.intValue());
                     ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorPrimaryDark));
                     builder.setSpan(redSpan, integer.intValue()-1, integer.intValue(),
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -129,13 +183,13 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 holder.name.setText(builder);
             }
 
-
             if(position == getPositionForSection(section)){
                 holder.section.setVisibility(View.VISIBLE);
                 holder.section.setText(c.getPhonebookLabel());
             }else{
                 holder.section.setVisibility(View.GONE);
             }
+
             ArrayList<String> numbers = c.getNumbers();
             if(numbers != null && numbers.size() > 0){
                 String s = numbers.get(0);
@@ -166,6 +220,15 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
         return list.size();
     }
 
+    public boolean isHaveNotContact(){
+        for (int i=0;i<list.size();i++){
+            if(!list.get(i).isContact()){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getKey() {
         return key;
     }
@@ -177,7 +240,10 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
     public void setAllItemChecked(boolean checked){
 
         for(int i=0;i<list.size();i++){
-            list.get(i).setChecked(checked);
+            Contact contact = list.get(i);
+            if(contact.isContact()){
+                contact.setChecked(checked);
+            }
         }
         notifyDataSetChanged();
     }
@@ -193,7 +259,8 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
     public int getCheckedCount(){
         int count = 0;
         for(int i=0;i<list.size();i++){
-            if(list.get(i).isChecked()){
+            Contact contact = list.get(i);
+            if(contact.isContact() && contact.isChecked()){
                 count++;
             }
         }
@@ -226,6 +293,9 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
 
     @Override
     public int getSectionForPosition(int position) {
+        if(position >= list.size() ||position < 0 ){
+            return 0;
+        }
         Contact c = list.get(position);
         if(c != null){
             String firstLetter = c.getPhonebookLabel();
@@ -249,6 +319,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
     public  class ViewHolder extends RecyclerView.ViewHolder {
 
         public TextView section;
+        public TextView helper;
         public TextView name;
         public TextView number;
         public ImageView photo;
@@ -260,6 +331,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
             super(v);
             View = v;
             section = (TextView) v.findViewById(R.id.section);
+            helper = (TextView) v.findViewById(R.id.contact_help);
             name = (TextView) v.findViewById(R.id.name);
             number = (TextView) v.findViewById(R.id.number);
             photo = (ImageView) v.findViewById(R.id.photo);

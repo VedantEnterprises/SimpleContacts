@@ -35,7 +35,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -44,8 +43,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ashokvarma.bottomnavigation.BottomNavigationBar;
-import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.ContactAdapter;
@@ -125,13 +122,60 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
         MyContentObserver contentObserver  = new MyContentObserver(handler);
         resolver.registerContentObserver(ContactsContract.RawContacts.CONTENT_URI,true,contentObserver);
+        createTwoObject();
+        addData();
 
         setListener();
         queryContacts();
 
         return view;
     }
+    private Contact assistant;
+    private Contact group;
 
+    private void createTwoObject(){
+        assistant = new Contact();
+        assistant.setName(Constant.CONTACT_ASSISTANT);
+        assistant.setContactID(Constant.CONTACT_ASSISTANT);
+        assistant.setContact(false);
+
+        group = new Contact();
+        group.setName(Constant.CONTACT_GROUP);
+        group.setContactID(Constant.CONTACT_GROUP);
+        group.setContact(false);
+    }
+
+    private void addData(){
+        if(assistant != null){
+            if(!datas.contains(assistant)){
+                datas.add(0,assistant);
+            }
+        }
+        if(group != null){
+            if(!datas.contains(group)){
+                datas.add(1,group);
+            }
+        }
+        if(adapter != null){
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void deleteData(){
+        if(assistant != null){
+            if(datas.contains(assistant)){
+                datas.remove(assistant);
+            }
+        }
+        if(group != null){
+            if(datas.contains(group)){
+                datas.remove(group);
+            }
+        }
+        if(adapter != null){
+            adapter.notifyDataSetChanged();
+        }
+    }
 
     private void initViews(View view) {
         search_et = (EditText) view.findViewById(R.id.search_et);
@@ -152,6 +196,70 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         mLayoutManager = new LinearLayoutManager(context);
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mLayoutManager);
+        adapter = new ContactAdapter(datas, context);
+
+        adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
+            @Override
+            public void onItemClick(int position) {
+                HideSoftInput();
+            }
+
+            @Override
+            public void onItemChecked(int position,View v) {
+                int checkedCount = adapter.getCheckedCount();
+                if(checkedCount == (adapter.isHaveNotContact()?adapter.getItemCount()-2:adapter.getItemCount())){
+                    isAllSelected = true;
+                }else{
+                    isAllSelected = false;
+                }
+                indexActivity.notifyCheckedItem(checkedCount,isAllSelected);
+                HideSoftInput();
+                notifyPop(checkedCount);
+            }
+
+            @Override
+            public void onLongClick(int position,View v) {
+                HideSoftInput();
+                Contact contact = datas.get(position);
+                if(!contact.isContact()){
+                    //Toast.makeText(context,"不是联系人条目 ",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                indexActivity.showToolbar();
+                hideSearchBarElement();
+                indexActivity.showActionMode();
+                isAllSelected = false;
+                showPop(v);
+            }
+        });
+
+        adapter.setAllItemChecked(false);
+
+        mRecyclerView.setAdapter(adapter);
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                HideSoftInput();
+
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                Log.d(TAG,"RecyclerView  onScrolled");
+                int firstPosition = mLayoutManager.findFirstVisibleItemPosition();
+                if(firstPosition >-1){
+                    int section = adapter.getSectionForPosition(firstPosition);
+                    if(section == 0 && (firstPosition <= 1)){
+                        section = adapter.getSectionForPosition(2);
+                    }
+                    indexSiderBar.setChooseIndex((char)(section)+"");
+                }
+            }
+        });
+
     }
 
 
@@ -196,7 +304,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         @Override
         public void run() {
             Log.d(TAG,"query  start--------------------");
-            datas.clear();
+        //    datas.clear();
             String st = "";
 
             Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
@@ -266,6 +374,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 contact.setName(name);
                 contact.setContactAccountID(rawContactsId);
                 contact.getNumbers().add(number);
+                contact.setContact(true);
 
                 if(datas.contains(contact)){
                     contact.getNumbers().add(number);
@@ -290,12 +399,13 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             if (c != null) {
                 String pinyin = characterParser.getSelling(c.getName());
                 c.setPinying(pinyin);
+
             }
         }
+        adapter.notifyDataSetChanged();
+        //adapter = new ContactAdapter(datas, context);
 
-        adapter = new ContactAdapter(datas, context);
-
-        adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
+        /*adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
             @Override
             public void onItemClick(int position) {
                 HideSoftInput();
@@ -318,7 +428,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             public void onLongClick(int position,View v) {
                 HideSoftInput();
                 indexActivity.showToolbar();
-                hideCancelTv();
+                hideSearchBarElement();
                 indexActivity.showActionMode();
                 isAllSelected = false;
                 showPop(v);
@@ -354,7 +464,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 HideSoftInput();
             }
         });
-
+*/
     }
     private PopupWindow popupWindow;
     private View popupView;
@@ -508,18 +618,28 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     /**
      * 按back key 如果此时toolbar is hide   then show toolbar meanwhile hide some view
      */
-    public void hideCancelTv(){
+    public void hideSearchBarElement(){
         if(num_contacts_tv == null|| cancel_search_tv == null || search_iv == null || search_clean_iv == null|| search_et == null){
             return;
         }
+
         num_contacts_tv.setVisibility(View.VISIBLE);
         cancel_search_tv.setVisibility(View.GONE);
         search_iv.setVisibility(View.GONE);
         search_clean_iv.setVisibility(View.GONE);
         search_et.setText("");
         search_et.setCursorVisible(false);
+
+    }
+
+    public void showAssistantAndGroup(){
+        addData();
+    }
+
+    public void scrollToFirstPosition(){
         mLayoutManager.scrollToPositionWithOffset(0,0);
     }
+
 
     /**
      *
@@ -527,6 +647,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     public void hideCheckBox(){
         adapter.setShowCheckBox(false);
         adapter.setAllItemChecked(false);
+        scrollToFirstPosition();
         if(popupWindow != null){
             popupWindow.dismiss();
         }
@@ -538,7 +659,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    indexActivity.hideToolbar();
+                    Log.d(TAG, "onFocusChange  hasFocus == true");
+                    if(adapter != null && !adapter.isShowCheckBox()){
+                        indexActivity.hideToolbar();
+                        deleteData();
+                    }
                     num_contacts_tv.setVisibility(View.GONE);
                     cancel_search_tv.setVisibility(View.VISIBLE);
                     search_iv.setVisibility(View.VISIBLE);
@@ -592,8 +717,12 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         search_et.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "onClick  search_et");
                 search_et.setCursorVisible(true);
-                indexActivity.hideToolbar();
+                if(adapter != null && !adapter.isShowCheckBox()){
+                    indexActivity.hideToolbar();
+                    deleteData();
+                }
                 num_contacts_tv.setVisibility(View.GONE);
                 cancel_search_tv.setVisibility(View.VISIBLE);
                 search_iv.setVisibility(View.VISIBLE);
@@ -604,6 +733,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View v) {
                 indexActivity.showToolbar();
+                addData();
                 num_contacts_tv.setVisibility(View.VISIBLE);
                 cancel_search_tv.setVisibility(View.GONE);
                 search_iv.setVisibility(View.GONE);

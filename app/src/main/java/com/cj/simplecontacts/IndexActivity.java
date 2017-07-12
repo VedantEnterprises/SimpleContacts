@@ -212,14 +212,14 @@ public class IndexActivity extends AppCompatActivity {
      * 隐藏toolbar
      */
     public void hideToolbar(){
-        getSupportActionBar().hide();
+        supportActionBar.hide();
     }
 
     /**
      * 显示toolbar
      */
     public void showToolbar(){
-        getSupportActionBar().show();
+        supportActionBar.show();
     }
 
     /**
@@ -245,7 +245,8 @@ public class IndexActivity extends AppCompatActivity {
             Log.d(TAG, "onBackPressed");
             supportActionBar.show();
             if(contactsFragment != null){
-                contactsFragment.hideCancelTv();
+                contactsFragment.hideSearchBarElement();
+                contactsFragment.scrollToFirstPosition();
             }
         }else{
             super.onBackPressed();
@@ -323,6 +324,9 @@ public class IndexActivity extends AppCompatActivity {
             Log.d(TAG,"onDestroyActionMode = ");
             if(contactsFragment != null){
                 contactsFragment.hideCheckBox();
+                contactsFragment.hideSearchBarElement();
+                contactsFragment.showAssistantAndGroup();
+                contactsFragment.scrollToFirstPosition();
             }
             actionMode = null;
         }

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="5dp"
+
     android:orientation="vertical">
     <LinearLayout
         android:background="#11000000"
@@ -85,6 +85,7 @@
         </android.support.v7.widget.RecyclerView>
 
         <com.cj.simplecontacts.view.IndexSiderBar
+            android:layout_marginBottom="5dp"
             android:layout_alignParentRight="true"
             app:textsize="15sp"
             android:id="@+id/inddex_sider_bar"

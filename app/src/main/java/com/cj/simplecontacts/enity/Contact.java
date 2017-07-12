@@ -10,6 +10,7 @@ import java.util.ArrayList;
  */
 
 public class Contact {
+    private boolean isContact;
     private String name;
     private String phonebook_label;
     private String pinying;
@@ -18,8 +19,13 @@ public class Contact {
     private boolean isChecked = false;
     private ArrayList<String> numbers = new ArrayList<>();//one contact have more than one phone number
 
+    public boolean isContact() {
+        return isContact;
+    }
 
-
+    public void setContact(boolean contact) {
+        isContact = contact;
+    }
 
     public String getName() {
         return name;
@@ -145,7 +151,9 @@ public class Contact {
         }
         if (obj instanceof Contact) {
             Contact c = (Contact) obj;
-            return this.contactID.equals(c.getContactID());
+            if(this.contactID != null){
+                return this.contactID.equals(c.getContactID());
+            }
         }
         return false;
     }
