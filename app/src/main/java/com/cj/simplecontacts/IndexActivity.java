@@ -375,6 +375,12 @@ public class IndexActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        if(contactsFragment != null){
+            contactsFragment.hideCheckBox();
+            contactsFragment.hideSearchBarElement();
+            contactsFragment.showAssistantAndGroup();
+            contactsFragment.scrollToFirstPosition();
+        }
         Log.d(TAG, "IndexActivity onStop");
     }
 

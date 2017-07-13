@@ -18,7 +18,6 @@ import android.os.Message;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -52,7 +51,14 @@ import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.view.IndexSiderBar;
 
 import java.util.ArrayList;
-import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by chenjun on 2017/6/11.
@@ -93,7 +99,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                     break;
                 case 1:
                     Log.d(TAG, "handleMessage 1");
-                    setUpData();
+                    updateData();
                     break;
                 default:
                     break;
@@ -126,7 +132,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         addData();
 
         setListener();
-        queryContacts();
+        checkPermissionAndQuery();
 
         return view;
     }
@@ -263,7 +269,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     }
 
 
-    private void queryContacts() {
+    private void checkPermissionAndQuery() {
             int permissionCheck = ContextCompat.checkSelfPermission(context,
                     Manifest.permission.READ_CONTACTS);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -294,106 +300,150 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                             Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
                 }
             } else {
-                new Thread(runnable).start();
+
+                queryContactsFromDB();
             }
 
     }
 
-    private Runnable runnable = new Runnable() {
 
-        @Override
-        public void run() {
-            Log.d(TAG,"query  start--------------------");
-        //    datas.clear();
-            String st = "";
-
-            Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-            int count = contactsCursor.getCount();//get row quantity,  is  contacts quantity
-            contactsCursor.close();
-            Message message = handler.obtainMessage();
-            message.what = 0;
-            message.arg1 = count;
-            handler.sendMessage(message);
-
-            st += "共" + count + "个联系人  \n ";
-
-            String sortString = ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY+" asc";//sort by  [A-Z]
-            String selection = ContactsContract.RawContacts.ACCOUNT_TYPE+" = ?";
-            String[] selectionArgs = {"com.android.localphone"};
-
-            String[] projection = {
-                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-                    ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID,
-                    "phonebook_label",
-                    ContactsContract.CommonDataKinds.Phone.NUMBER,
-                    ContactsContract.Contacts.DISPLAY_NAME};
-
-            Cursor phone = resolver.query(
-                                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                            projection,
-                                            selection,
-                                            selectionArgs, sortString);
-            st += "----------------------------------------------- \n";
-            while (phone.moveToNext()) {
-
-                Contact contact = new Contact();
-
-                String contactID = phone
-                        .getString(phone
-                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
-                String phonebook_label = phone
-                        .getString(phone
-                                .getColumnIndex("phonebook_label"));
-                String name = phone
-                        .getString(phone
-                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                name = name.trim();
-
-                String rawContactsId = phone
-                        .getString(phone
-                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID));
-
-                String number = phone
-                        .getString(phone
-                                .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                // 对手机号码进行预处理（去掉号码前的+86、首尾空格、“-”号等）
-                number = number.replaceAll("^(\\+86)", "");
-                number = number.replaceAll("^(86)", "");
-                number = number.replaceAll("-", "");
-                number = number.replaceAll(" ", "");
-                number = number.trim();
-
-                st += "contactID:" + contactID + "\n";
-                st += "name:" + name + "\n";
-                st += "phonebook_label:" + phonebook_label + "\n";
-                st += "rawContactsId:" + rawContactsId + "\n";
-                st += "number:" + number + "\n";
-
-                contact.setContactID(contactID);
-                contact.setPhonebookLabel(phonebook_label);
-                contact.setName(name);
-                contact.setContactAccountID(rawContactsId);
-                contact.getNumbers().add(number);
-                contact.setContact(true);
-
-                if(datas.contains(contact)){
-                    contact.getNumbers().add(number);
-                }else{
-                    datas.add(contact);
-                }
+    private void queryContactsFromDB(){
+        Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> observableEmitter) throws Exception {
+                Log.d(TAG,"subscribe  thread:"+Thread.currentThread().getName());
+                int sum = querySum();
+                observableEmitter.onNext(new Integer(sum));
+                queryDetailInformation();
+                observableEmitter.onComplete();
             }
-            st += "----------------------------------------------- \n";
-           //  Log.d(TAG,"query  st="+st);
-            phone.close();
-            handler.sendEmptyMessage(1);
-            Log.d(TAG,"query  end--------------------");
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Integer>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Integer value) {
+                      //  Log.d(TAG,"onNext:value="+value.intValue());
+                      //  Log.d(TAG,"onNext  thread:"+Thread.currentThread().getName());
+                        num_contacts_tv.setVisibility(View.VISIBLE);
+                        num_contacts_tv.setText("共有" + value.intValue() + "个联系人");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //Log.d(TAG,"onComplete");
+                       // Log.d(TAG,"onComplete thread:"+Thread.currentThread().getName());
+                        updateData();
+                    }
+                });
+    }
+
+    /**
+     *
+     * @return
+     */
+
+    private int  querySum(){
+        Log.d(TAG,"querySum()");
+        int count = 0;
+        Cursor contactsCursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+        if(contactsCursor != null){
+            count = contactsCursor.getCount();//get row quantity,  is  contacts quantity
+            contactsCursor.close();
         }
+        return count;
+    }
 
-    };
+    /**
+     *
+     */
+
+    private void queryDetailInformation(){
+        Log.d(TAG,"queryDetailInformation()");
+        String st = "";
+        String sortString = ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY+" asc";//sort by  [A-Z]
+        String selection = ContactsContract.RawContacts.ACCOUNT_TYPE+" = ?";
+        String[] selectionArgs = {"com.android.localphone"};
+
+        String[] projection = {
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID,
+                "phonebook_label",
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.Contacts.DISPLAY_NAME};
+
+        Cursor phone = resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs, sortString);
+        st += "----------------------------------------------- \n";
+        while (phone.moveToNext()) {
+
+            Contact contact = new Contact();
+
+            String contactID = phone
+                    .getString(phone
+                            .getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+            String phonebook_label = phone
+                    .getString(phone
+                            .getColumnIndex("phonebook_label"));
+            String name = phone
+                    .getString(phone
+                            .getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+            name = name.trim();
+
+            String rawContactsId = phone
+                    .getString(phone
+                            .getColumnIndex(ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID));
+
+            String number = phone
+                    .getString(phone
+                            .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            // 对手机号码进行预处理（去掉号码前的+86、首尾空格、“-”号等）
+            number = number.replaceAll("^(\\+86)", "");
+            number = number.replaceAll("^(86)", "");
+            number = number.replaceAll("-", "");
+            number = number.replaceAll(" ", "");
+            number = number.trim();
+
+            st += "contactID:" + contactID + "\n";
+            st += "name:" + name + "\n";
+            st += "phonebook_label:" + phonebook_label + "\n";
+            st += "rawContactsId:" + rawContactsId + "\n";
+            st += "number:" + number + "\n";
+
+            contact.setContactID(contactID);
+            contact.setPhonebookLabel(phonebook_label);
+            contact.setName(name);
+            contact.setContactAccountID(rawContactsId);
+            contact.getNumbers().add(number);
+            contact.setContact(true);
+
+            if(datas.contains(contact)){
+                contact.getNumbers().add(number);
+            }else{
+                datas.add(contact);
+            }
+        }
+        st += "----------------------------------------------- \n";
+        //  Log.d(TAG,"query  st="+st);
+        phone.close();
+    }
 
 
 
-    private void setUpData() {
+    private void updateData() {
         for (int i = 0; i < datas.size(); i++) {
             Contact c = datas.get(i);
             if (c != null) {
@@ -403,68 +453,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             }
         }
         adapter.notifyDataSetChanged();
-        //adapter = new ContactAdapter(datas, context);
 
-        /*adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
-            @Override
-            public void onItemClick(int position) {
-                HideSoftInput();
-            }
-
-            @Override
-            public void onItemChecked(int position,View v) {
-                int checkedCount = adapter.getCheckedCount();
-                if(checkedCount == adapter.getItemCount()){
-                    isAllSelected = true;
-                }else{
-                    isAllSelected = false;
-                }
-                indexActivity.notifyCheckedItem(checkedCount,isAllSelected);
-                HideSoftInput();
-                notifyPop(checkedCount);
-            }
-
-            @Override
-            public void onLongClick(int position,View v) {
-                HideSoftInput();
-                indexActivity.showToolbar();
-                hideSearchBarElement();
-                indexActivity.showActionMode();
-                isAllSelected = false;
-                showPop(v);
-            }
-        });
-
-        adapter.setAllItemChecked(false);
-
-        mRecyclerView.setAdapter(adapter);
-
-
-        mRecyclerView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
-            @Override
-            public void onChildViewAttachedToWindow(View view) {
-                Log.d(TAG,"RecyclerView  onChildViewAttachedToWindow");
-
-                    int firstPosition = mLayoutManager.findFirstVisibleItemPosition();
-                    if(firstPosition >= 0){
-                        int section = adapter.getSectionForPosition(firstPosition);
-                        indexSiderBar.setChooseIndex((char)(section)+"");
-                    }
-            }
-            @Override
-            public void onChildViewDetachedFromWindow(View view) {
-
-            }
-        });
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                HideSoftInput();
-            }
-        });
-*/
     }
     private PopupWindow popupWindow;
     private View popupView;
@@ -605,7 +594,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
            // Log.d(TAG,"onChange  selfChange="+selfChange);
-            new Thread(runnable).start();
+            datas.clear();
+            addData();
+            queryContactsFromDB();
         }
 
         @Override
@@ -893,7 +884,8 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    new Thread(runnable).start();
+
+                    queryContactsFromDB();
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                     //Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
