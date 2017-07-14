@@ -2,6 +2,7 @@ package com.cj.simplecontacts.fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,6 +28,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -34,9 +36,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -88,24 +93,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     private ArrayList<Contact> datas = new ArrayList();
     private boolean isAllSelected = false;
 
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    num_contacts_tv.setVisibility(View.VISIBLE);
-                    num_contacts_tv.setText("共有" + msg.arg1 + "个联系人");
-                    break;
-                case 1:
-                    Log.d(TAG, "handleMessage 1");
-                    updateData();
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    private Handler handler = new Handler();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -197,6 +185,47 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
     }
 
+    private void showContactDialog(Contact contact){
+        Dialog dialog = new Dialog(context,R.style.DialogTheme);
+
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.contact_dialog, null);
+        ImageButton dialogShare = (ImageButton) view.findViewById(R.id.dialog_share);
+        ImageButton dialogSeeMore = (ImageButton) view.findViewById(R.id.dialog_see_more);
+        FrameLayout dialogSendMsg = (FrameLayout) view.findViewById(R.id.dialog_send_msg);
+        FrameLayout dialogCall = (FrameLayout) view.findViewById(R.id.dialog_call);
+
+        TextView dialogName = (TextView) view.findViewById(R.id.dialog_name);
+        TextView dialogNum = (TextView) view.findViewById(R.id.dialog_num);
+        TextView dialogRegion = (TextView) view.findViewById(R.id.dialog_region);
+
+        dialogName.setText(contact.getName());
+        ArrayList<String> numbers = contact.getNumbers();
+        if(numbers != null && numbers.size()>0){
+            dialogNum.setText(numbers.get(0));
+        }
+
+        dialogShare.setOnClickListener(this);
+        dialogSeeMore.setOnClickListener(this);
+        dialogSendMsg.setOnClickListener(this);
+        dialogCall.setOnClickListener(this);
+
+        dialog.setContentView(view);
+
+        WindowManager m = indexActivity.getWindowManager();
+        Display d = m.getDefaultDisplay();
+
+        Window window = dialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.gravity = Gravity.CENTER;
+        lp.width =  (int) (d.getWidth() * 0.75);//宽度高可设置具体大小
+        lp.height =  WindowManager.LayoutParams.WRAP_CONTENT;
+        window.setAttributes(lp);
+
+
+        dialog.show();
+    }
+
     private void setUpRecyclerView(){
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(context);
@@ -208,6 +237,18 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onItemClick(int position) {
                 HideSoftInput();
+                Contact contact = datas.get(position);
+
+                if(contact.isContact()){
+                    showContactDialog(contact);
+                }else{
+                    if(contact.getName().equals(Constant.CONTACT_ASSISTANT)){
+                        Toast.makeText(context,"去联系人助手界面 ",Toast.LENGTH_SHORT).show();
+                    }else if(contact.getName().equals(Constant.CONTACT_GROUP)){
+                        Toast.makeText(context,"去我的分组界面 ",Toast.LENGTH_SHORT).show();
+                    }
+                }
+
             }
 
             @Override
@@ -578,6 +619,18 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.fl4:
                 Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.dialog_share:
+                Toast.makeText(context,"分享",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.dialog_see_more:
+                Toast.makeText(context,"查看更多",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.dialog_send_msg:
+                Toast.makeText(context,"发短信",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.dialog_call:
+                Toast.makeText(context,"打电话",Toast.LENGTH_SHORT).show();
                 break;
             default:
                 break;

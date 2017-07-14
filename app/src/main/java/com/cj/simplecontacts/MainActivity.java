@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            Log.d(TAG,"size = "+vpList.size());
+            //Log.d(TAG,"size = "+vpList.size());
             return vpList.size();
         }
 

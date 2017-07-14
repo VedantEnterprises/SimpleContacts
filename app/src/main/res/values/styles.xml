@@ -51,4 +51,22 @@
         <item name="android:windowEnterAnimation">@anim/pop_enter</item>
         <item name="android:windowExitAnimation">@anim/pop_out</item>
     </style>
+
+    <style name="DialogTheme" parent="@android:style/Theme.Dialog">
+  <!--  &lt;!&ndash; 边框 &ndash;&gt;
+    <item name="android:windowFrame">@null</item>
+    &lt;!&ndash; 是否浮现在activity之上 &ndash;&gt;
+    <item name="android:windowIsFloating">true</item>
+    &lt;!&ndash; 半透明 &ndash;&gt;
+    <item name="android:windowIsTranslucent">true</item>
+    &lt;!&ndash; 无标题 &ndash;&gt;
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:background">@android:color/transparent</item>-->
+    <!-- 背景透明 -->
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <!-- 模糊 -->
+    <item name="android:backgroundDimEnabled">true</item>
+    <!-- 遮罩层 -->
+    <item name="android:backgroundDimAmount">0.5</item>
+    </style>
 </resources>

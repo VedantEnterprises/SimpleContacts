@@ -66,6 +66,7 @@ public class IndexActivity extends AppCompatActivity {
         supportActionBar = getSupportActionBar();
         supportActionBar.setTitle("轻版通讯录");
         toolbar.setNavigationIcon(R.drawable.sliding_menu_btn_bg);
+        toolbar.setOverflowIcon(getResources().getDrawable(R.drawable.overflow_btn_bg));
     }
 
     private void setUpFragment() {

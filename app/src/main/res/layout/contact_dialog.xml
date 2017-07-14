@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/contact_dialog_bg"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <RelativeLayout
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageButton
+            android:clickable="true"
+            android:id="@+id/dialog_share"
+            android:background="@drawable/dialog_share_bg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <ImageButton
+            android:clickable="true"
+            android:layout_alignParentRight="true"
+            android:id="@+id/dialog_see_more"
+            android:background="@drawable/dialog_see_more_bg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:layout_centerVertical="true"
+            android:textSize="12sp"
+            android:layout_marginRight="5dp"
+            android:layout_toLeftOf="@+id/dialog_see_more"
+            android:text="更多"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/dialog_photo"
+            android:src="@drawable/default_contact_head_icon"
+            android:layout_width="180px"
+            android:layout_height="180px" />
+        <TextView
+            android:layout_marginTop="5dp"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#aa000000"
+            android:id="@+id/dialog_name"
+            android:textSize="18sp"
+            android:text="阿星"
+            android:layout_below="@+id/dialog_photo"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_marginTop="25dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <View
+            android:id="@+id/line"
+            android:background="#22000000"
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"/>
+        <LinearLayout
+            android:layout_marginTop="1dp"
+            android:layout_marginLeft="10dp"
+            android:layout_centerVertical="true"
+            android:orientation="vertical"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content">
+            <TextView
+                android:textColor="#99000000"
+                android:textSize="17sp"
+                android:text="13888888888"
+                android:id="@+id/dialog_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:textSize="15sp"
+                android:layout_marginTop="5dp"
+                android:text="广东-深圳 移动"
+                android:id="@+id/dialog_region"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_marginTop="1dp"
+            android:background="@drawable/dialog_send_msg_bg"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="10dp"
+            android:clickable="true"
+            android:id="@+id/dialog_send_msg"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:src="@drawable/calllog_detail_sms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_marginTop="1dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="10dp"
+            android:background="@drawable/dialog_send_msg_bg"
+            android:id="@+id/dialog_call"
+            android:clickable="true"
+            android:layout_toLeftOf="@+id/dialog_send_msg"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:src="@drawable/calllog_detail_call"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </FrameLayout>
+    </RelativeLayout>
+</LinearLayout>

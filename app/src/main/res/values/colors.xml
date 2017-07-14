@@ -6,6 +6,8 @@
     <color name="orange">#FF00FF00</color>
     <color name="blue">#FF0000FF</color>
     <color name="contact_item_bg_normal">#FFFFFFFF</color>
+    <color name="dialog_send_msg_and_call_bg_normal">#00FFFFFF</color>
+    <color name="dialog_send_msg_and_call_bg_pressed">#18000000</color>
     <color name="contact_item_bg_pressed">#08000000</color>
     <color name="pop_text_color_enable">#99000000</color>
     <color name="pop_text_color_disable">#22000000</color>
