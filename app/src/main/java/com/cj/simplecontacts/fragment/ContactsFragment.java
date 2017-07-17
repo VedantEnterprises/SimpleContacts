@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -55,6 +56,10 @@ import com.cj.simplecontacts.tool.CharacterParser;
 import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.view.IndexSiderBar;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import io.reactivex.Observable;
@@ -63,6 +68,9 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -204,6 +212,12 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         if(numbers != null && numbers.size()>0){
             dialogNum.setText(numbers.get(0));
         }
+        String attr = contact.getAttr();
+        if(TextUtils.isEmpty(attr)){
+            dialogRegion.setText("正在查询...");
+        }else {
+            dialogRegion.setText(attr);
+        }
 
         dialogShare.setOnClickListener(this);
         dialogSeeMore.setOnClickListener(this);
@@ -221,7 +235,6 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         lp.width =  (int) (d.getWidth() * 0.75);//宽度高可设置具体大小
         lp.height =  WindowManager.LayoutParams.WRAP_CONTENT;
         window.setAttributes(lp);
-
 
         dialog.show();
     }
@@ -349,6 +362,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
 
     private void queryContactsFromDB(){
+
         Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
             public void subscribe(ObservableEmitter<Integer> observableEmitter) throws Exception {
@@ -382,9 +396,10 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
                     @Override
                     public void onComplete() {
-                        //Log.d(TAG,"onComplete");
+                        Log.d(TAG,"onComplete");
                        // Log.d(TAG,"onComplete thread:"+Thread.currentThread().getName());
                         updateData();
+                      queryNumberAttribution();
                     }
                 });
     }
@@ -471,8 +486,13 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             contact.getNumbers().add(number);
             contact.setContact(true);
 
+
+
             if(datas.contains(contact)){
-                contact.getNumbers().add(number);
+               // Log.d(TAG,"query  number="+number+"  name="+contact.getName());
+                Contact c = datas.get(datas.indexOf(contact));
+                c.getNumbers().add(number);
+               // Log.d(TAG,"query  numbers="+c.getNumbers().size());
             }else{
                 datas.add(contact);
             }
@@ -482,8 +502,117 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         phone.close();
     }
 
+    /**
+     * 归属地查询
+     */
+    private void queryNumberAttribution(){
+        Observable.fromIterable(datas)
+
+                .filter(new Predicate<Contact>() {
+                    @Override
+                    public boolean test(Contact contact) throws Exception {
+                       // Log.d(TAG," test:"+Thread.currentThread().getName());
+                        ArrayList<String> numbers = contact.getNumbers();
+                        if(numbers != null && numbers.size()>0){
+                            SharedPreferences sharedPreferences = context.getSharedPreferences("simplecontacts", context.MODE_PRIVATE);
+                            String att = sharedPreferences.getString(numbers.get(0), "");
+                            if(TextUtils.isEmpty(att)){
+                                att = getAttInfo(numbers.get(0));
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString(numbers.get(0),att);
+                                editor.commit();
+                            }
+                            contact.setAttr(att);
+                        }
+                        return true;
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Contact>() {
+                    @Override
+                    public void accept(Contact contact) throws Exception {
+                       // Log.d(TAG," accept:"+Thread.currentThread().getName());
+                        //Log.d(TAG,"accept  contact att="+contact.getAttr());
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param num
+     * @return
+     */
+    private String getAttInfo(String num){
+        String attribution = "未知归属地";
+
+        Log.d(TAG,"readAssetsFile  num="+num);
+        InputStream is = null;
+        try {
+            is = context.getAssets().open("Mobile.txt");
+            BufferedReader br=new BufferedReader(new InputStreamReader(is,"utf8"));
+            String line;
+            while ((line=br.readLine()) != null){
+                String[] attInfo = line.split(",");
+
+                String seven = attInfo[1];
+                seven = seven.substring(1,seven.length()-1).trim();//去掉""手机号前7位
+
+                String province = attInfo[2];
+                province = province.substring(1,province.length()-1).trim();//省份
+
+                String city = attInfo[3];
+                city = city.substring(1,city.length()-1).trim();//城市
+
+                String operator = attInfo[4];
+                operator = operator.substring(1,operator.length()-1).trim().replace("中国","");//运营商
 
 
+                String areaCode = attInfo[5];
+                areaCode = areaCode.substring(1,areaCode.length()-1).trim();//去掉""区号
+
+
+
+               if(num.startsWith("1")){
+
+                   if(num.trim().indexOf(seven, 0) == 0){
+                       if(province.equals(city)){
+                           attribution = city+" "+operator;
+                       }else{
+                           attribution = province+"-"+city+" "+operator;
+                       }
+                       break;
+                   }else {
+                       continue;
+                   }
+
+               }else{
+
+                   if(num.indexOf(areaCode, 0) == 0){
+                       if(province.equals(city)){
+                           attribution = city;
+                       }else{
+                           attribution = province+"-"+city;
+                       }
+                       break;
+                   }else {
+                       continue;
+                   }
+
+               }
+            }
+
+        } catch (IOException e) {
+
+        }finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return attribution;
+    }
     private void updateData() {
         for (int i = 0; i < datas.size(); i++) {
             Contact c = datas.get(i);
@@ -681,7 +810,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     }
 
     public void scrollToFirstPosition(){
-        mLayoutManager.scrollToPositionWithOffset(0,0);
+        if(mLayoutManager != null){
+            mLayoutManager.scrollToPositionWithOffset(0,0);
+        }
     }
 
 
@@ -689,8 +820,10 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
      *
      */
     public void hideCheckBox(){
-        adapter.setShowCheckBox(false);
-        adapter.setAllItemChecked(false);
+        if(adapter != null){
+            adapter.setShowCheckBox(false);
+            adapter.setAllItemChecked(false);
+        }
         scrollToFirstPosition();
         if(popupWindow != null){
             popupWindow.dismiss();

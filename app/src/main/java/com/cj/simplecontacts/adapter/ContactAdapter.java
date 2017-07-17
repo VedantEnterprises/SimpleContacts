@@ -191,23 +191,26 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
             }
 
             ArrayList<String> numbers = c.getNumbers();
-            if(numbers != null && numbers.size() > 0){
+            int size = numbers.size();
+           // Log.d("test","numbers  size:"+size+"  name="+c.getName());
+            if(numbers != null && size > 0){
                 String s = numbers.get(0);
                 SpannableStringBuilder builder1 = new SpannableStringBuilder(
                         s);
                 if(TextUtils.isEmpty(key)) {
-                    holder.number.setText(s);
+
+                    holder.number.setText(size==1?s:s+" 多号码");
                 }else{
                     int index = s.indexOf(key);
                     if(index < 0){
-                        holder.number.setText(s);
+                        holder.number.setText(size==1?s:s+" 多号码");
                     }else{
                         for(int i = 0;i<key.length();i++){
                             ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorPrimaryDark));
                             builder1.setSpan(redSpan, i, i+1,
                                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         }
-                        holder.number.setText(builder1);
+                        holder.number.setText(size==1?builder1:builder1+" 多号码");
                     }
                 }
             }

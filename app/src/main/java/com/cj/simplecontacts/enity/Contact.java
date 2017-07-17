@@ -18,7 +18,7 @@ public class Contact {
     private String contactAccountID;
     private boolean isChecked = false;
     private ArrayList<String> numbers = new ArrayList<>();//one contact have more than one phone number
-
+    private String attr;
     public boolean isContact() {
         return isContact;
     }
@@ -78,6 +78,13 @@ public class Contact {
         this.numbers = numbers;
     }
 
+    public String getAttr() {
+        return attr;
+    }
+
+    public void setAttr(String attr) {
+        this.attr = attr;
+    }
 
     /**
      * 获取关键字在名字pinying中下标集合
