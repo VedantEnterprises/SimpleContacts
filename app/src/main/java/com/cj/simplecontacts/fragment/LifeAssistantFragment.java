@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import com.cj.simplecontacts.R;
 
 /**
- * Created by chenjun on 2017/6/11.
+ * Created by chenjun on 2017/6/a11.
  */
 
 public class LifeAssistantFragment extends Fragment {

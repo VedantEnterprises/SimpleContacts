@@ -11,4 +11,12 @@
     <color name="contact_item_bg_pressed">#08000000</color>
     <color name="pop_text_color_enable">#99000000</color>
     <color name="pop_text_color_disable">#22000000</color>
+    <color name="iv_dial_up_card1_green">#00ff4c</color>
+    <color name="iv_dial_up_card1_green_press">#00fff7</color>
+
+    <color name="iv_dial_up_card2_green">#00bfff</color>
+    <color name="iv_dial_up_card2_green_press">#008cff</color>
+
+    <color name="select_sim_cancel">#00FFFFFF</color>
+    <color name="select_sim_cancel_press">#18000000</color>
 </resources>

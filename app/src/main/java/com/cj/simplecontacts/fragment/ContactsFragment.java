@@ -1,13 +1,12 @@
 package com.cj.simplecontacts.fragment;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -16,15 +15,13 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -44,6 +41,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +49,9 @@ import android.widget.Toast;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.ContactAdapter;
+import com.cj.simplecontacts.adapter.DialogNumAttAdapter;
 import com.cj.simplecontacts.enity.Contact;
+import com.cj.simplecontacts.enity.Number;
 import com.cj.simplecontacts.tool.CharacterParser;
 import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.view.IndexSiderBar;
@@ -61,20 +61,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 /**
- * Created by chenjun on 2017/6/11.
+ * Created by chenjun on 2017/6/a11.
  */
 
 public class ContactsFragment extends Fragment implements View.OnClickListener{
@@ -100,7 +101,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
     private ArrayList<Contact> datas = new ArrayList();
     private boolean isAllSelected = false;
-
+    private int sum = 0;//总的联系人
     private Handler handler = new Handler();
 
     @Override
@@ -120,18 +121,18 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         setUpRecyclerView();
 
         characterParser = CharacterParser.getInstance();
-        resolver = context.getContentResolver();
 
         MyContentObserver contentObserver  = new MyContentObserver(handler);
-        resolver.registerContentObserver(ContactsContract.RawContacts.CONTENT_URI,true,contentObserver);
+        resolver.registerContentObserver(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,true,contentObserver);
         createTwoObject();
         addData();
 
         setListener();
-        checkPermissionAndQuery();
+
 
         return view;
     }
+
     private Contact assistant;
     private Contact group;
 
@@ -189,40 +190,80 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         tv_dialog = (TextView) view.findViewById(R.id.tv_dialog);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.rv_contacts);
 
+        num_contacts_tv.setText("共有" + sum + "个联系人");
         indexSiderBar.setTextDialog(tv_dialog);
 
     }
 
-    private void showContactDialog(Contact contact){
-        Dialog dialog = new Dialog(context,R.style.DialogTheme);
+    /**
+     *
+     * @param contact
+     */
+    private void showContactDialog(final Contact contact){
+        final Dialog dialog = new Dialog(context,R.style.DialogTheme);
 
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.contact_dialog, null);
         ImageButton dialogShare = (ImageButton) view.findViewById(R.id.dialog_share);
         ImageButton dialogSeeMore = (ImageButton) view.findViewById(R.id.dialog_see_more);
-        FrameLayout dialogSendMsg = (FrameLayout) view.findViewById(R.id.dialog_send_msg);
-        FrameLayout dialogCall = (FrameLayout) view.findViewById(R.id.dialog_call);
-
         TextView dialogName = (TextView) view.findViewById(R.id.dialog_name);
-        TextView dialogNum = (TextView) view.findViewById(R.id.dialog_num);
-        TextView dialogRegion = (TextView) view.findViewById(R.id.dialog_region);
+        RecyclerView rv = (RecyclerView) view.findViewById(R.id.dialog_rv);
+        LinearLayout lSeeMore = (LinearLayout) view.findViewById(R.id.ll_see_more);
+        TextView tvSeeMore = (TextView) view.findViewById(R.id.tv_see_more);
+
+        final ArrayList<Number> numbers = contact.getNumbers();
+       // Log.d(TAG, "showContactDialog numbers = "+numbers.size());
+        if(numbers != null && numbers.size() >3){
+            lSeeMore.setVisibility(View.VISIBLE);
+            tvSeeMore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(context,"查看"+contact.getName()+"更多号码",Toast.LENGTH_SHORT).show();
+                }
+            });
+        }else{
+            lSeeMore.setVisibility(View.GONE);
+        }
+        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        rv.setLayoutManager(layoutManager);
+        DialogNumAttAdapter adapter = new DialogNumAttAdapter(numbers,context);
+        rv.setAdapter(adapter);
+        adapter.setReclerViewItemListener(new DialogNumAttAdapter.ReclerViewItemListener() {
+            @Override
+            public void onCallClick(int position) {
+               // Toast.makeText(context,"拨打"+contact.getName()+"的号码:"+numbers.get(position).getNum(),Toast.LENGTH_SHORT).show();
+                boolean multiSim = isMultiSim(context);
+               // Toast.makeText(context,"拨打"+contact.getName()+"的号码:"+numbers.get(position).getNum()+"  "+multiSim,Toast.LENGTH_SHORT).show();
+                String num = numbers.get(position).getNum();
+                if(multiSim){
+                    dialog.dismiss();
+                    showSelectSIMDialog(num,dialog);
+                }else{
+                    call(context,0,num);
+                }
+            }
+
+            @Override
+            public void onSendMsgClick(int position) {
+                Toast.makeText(context,"给"+contact.getName()+"的号码:"+numbers.get(position).getNum()+" 发信息",Toast.LENGTH_SHORT).show();
+            }
+        });
 
         dialogName.setText(contact.getName());
-        ArrayList<String> numbers = contact.getNumbers();
-        if(numbers != null && numbers.size()>0){
-            dialogNum.setText(numbers.get(0));
-        }
-        String attr = contact.getAttr();
-        if(TextUtils.isEmpty(attr)){
-            dialogRegion.setText("正在查询...");
-        }else {
-            dialogRegion.setText(attr);
-        }
 
-        dialogShare.setOnClickListener(this);
-        dialogSeeMore.setOnClickListener(this);
-        dialogSendMsg.setOnClickListener(this);
-        dialogCall.setOnClickListener(this);
+        dialogShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(context,"分享"+contact.getName()+"的名片",Toast.LENGTH_SHORT).show();
+            }
+        });
+        dialogSeeMore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(context,"查看"+contact.getName()+"更多信息",Toast.LENGTH_SHORT).show();
+            }
+        });
 
         dialog.setContentView(view);
 
@@ -238,6 +279,105 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
         dialog.show();
     }
+
+    /**
+     * 如果是双卡用户 弹出对话框 选择用哪张卡拨打
+     * @param num
+     * @param dialog
+     */
+    private void showSelectSIMDialog(final String num, final Dialog dialog){
+        final Dialog mDialog = new Dialog(context,R.style.DialogTheme);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.dialog_select_sim, null);
+        TextView cancelCall = (TextView) view.findViewById(R.id.cancel_call);
+        LinearLayout callBySim1 = (LinearLayout) view.findViewById(R.id.call_by_sim1);
+        LinearLayout callBySim2 = (LinearLayout) view.findViewById(R.id.call_by_sim2);
+        callBySim1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Toast.makeText(context,"用卡1拨打",Toast.LENGTH_SHORT).show();
+                call(context,0,num);
+                mDialog.dismiss();
+            }
+        });
+        callBySim2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               // Toast.makeText(context,"用卡2拨打",Toast.LENGTH_SHORT).show();
+                call(context,1,num);
+                mDialog.dismiss();
+            }
+        });
+
+        cancelCall.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mDialog.dismiss();
+
+            }
+        });
+        mDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                dialog.show();
+            }
+        });
+        WindowManager m = indexActivity.getWindowManager();
+        Display d = m.getDefaultDisplay();
+        mDialog.setContentView(view);
+        Window window = mDialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        lp.gravity = Gravity.CENTER;
+        lp.width =  (int) (d.getWidth() * 0.75);//宽度高可设置具体大小
+        lp.height =  WindowManager.LayoutParams.WRAP_CONTENT;
+        window.setAttributes(lp);
+
+        mDialog.show();
+    }
+
+    /**
+     * 判断是否是双卡
+     * @param context
+     * @return
+     */
+
+    public static boolean isMultiSim(Context context){
+        boolean result = false;
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+        if(telecomManager != null){
+            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
+            result = phoneAccountHandleList.size() >= 2;
+        }
+        return result;
+    }
+
+    /**
+     * 拨打电话
+     * @param context
+     * @param id
+     * @param telNum
+     */
+
+    public static void call(Context context, int id, String telNum){
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+
+        if(telecomManager != null){
+            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
+
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_CALL);
+            intent.setData(Uri.parse("tel:" + telNum));
+            intent.putExtra(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandleList.get(id));
+            context.startActivity(intent);
+        }
+    }
+  //  用指定sim卡拨号
+
+//    添加了一个携带值
+//    phoneAccountHandleList.get(id)
+//    id为0即为卡1 ，1即为卡二  希望对你有帮助
+// 所有的选卡外呼都是在TelephonyManager和TelecomManager这两个类里面找，
+// 这是Android 原生的，从5.1版本开始原生就支持双卡拨电话了自己多看看api
 
     private void setUpRecyclerView(){
         mRecyclerView.setHasFixedSize(true);
@@ -323,56 +463,21 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     }
 
 
-    private void checkPermissionAndQuery() {
-            int permissionCheck = ContextCompat.checkSelfPermission(context,
-                    Manifest.permission.READ_CONTACTS);
-            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
-                    new AlertDialog.Builder(context)
-                            .setMessage("您拒绝过授予读取通讯录的权限,但是只有申请该权限,才能查询通讯录,你确定要重新申请获取权限吗？")
-                            .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                    //again request permission
-                                    ContactsFragment.this.requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
-                                            Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
 
-                                }
-                            })
-                            .setNegativeButton("no", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            })
-                            .create()
-                            .show();
-                }else{
-                    // No explanation needed, we can request the permission.
-                    requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
-                            Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
-                }
-            } else {
-
-                queryContactsFromDB();
-            }
-
-    }
-
-
-    private void queryContactsFromDB(){
-
-        Observable.create(new ObservableOnSubscribe<Integer>() {
-            @Override
-            public void subscribe(ObservableEmitter<Integer> observableEmitter) throws Exception {
-                Log.d(TAG,"subscribe  thread:"+Thread.currentThread().getName());
-                int sum = querySum();
-                observableEmitter.onNext(new Integer(sum));
-                queryDetailInformation();
-                observableEmitter.onComplete();
-            }
-        })
+    /**
+     *打电话 增加联系人 删除联系人 都收到通知
+     */
+    private void notifyDataChange(){
+        Observable
+                .create(new ObservableOnSubscribe<Integer>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<Integer> observableEmitter) throws Exception {
+                       // Log.d(TAG,"notifyDataChange Observable create  thread:"+Thread.currentThread().getName());
+                        int sum = querySum();
+                        observableEmitter.onNext(new Integer(sum));
+                        observableEmitter.onComplete();
+                    }
+                })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Integer>() {
@@ -383,10 +488,16 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
                     @Override
                     public void onNext(Integer value) {
-                      //  Log.d(TAG,"onNext:value="+value.intValue());
-                      //  Log.d(TAG,"onNext  thread:"+Thread.currentThread().getName());
-                        num_contacts_tv.setVisibility(View.VISIBLE);
-                        num_contacts_tv.setText("共有" + value.intValue() + "个联系人");
+                        //Log.d(TAG,"notifyDataChange onNext:value="+value.intValue());
+                       // Log.d(TAG,"notifyDataChange onNext  thread:"+Thread.currentThread().getName());
+
+                        if(value.intValue() != sum){//如果人数有变化
+                            datas.clear();
+                            addData();
+                            queryContactsFromDB();
+                        }else{
+                            Log.d(TAG,"notifyDataChange 人数没有变化");
+                        }
                     }
 
                     @Override
@@ -396,16 +507,66 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
                     @Override
                     public void onComplete() {
-                        Log.d(TAG,"onComplete");
-                       // Log.d(TAG,"onComplete thread:"+Thread.currentThread().getName());
-                        updateData();
-                      queryNumberAttribution();
+                       // Log.d(TAG,"notifyDataChange  onComplete");
+                       // Log.d(TAG,"notifyDataChange onComplete thread:"+Thread.currentThread().getName());
+
                     }
                 });
     }
 
     /**
-     *
+     *先查询总人数,然后再详细信息
+     */
+
+    private void queryContactsFromDB(){
+        Log.d(TAG,"queryContactsFromDB");
+        Observable
+                .create(new ObservableOnSubscribe<Integer>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<Integer> observableEmitter) throws Exception {
+                        //Log.d(TAG,"queryContactsFromDB Observable create  thread:"+Thread.currentThread().getName());
+                        int sum = querySum();
+                        observableEmitter.onNext(new Integer(sum));
+                        queryDetailInformation();
+                        observableEmitter.onComplete();
+                    }
+                 })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Integer>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(Integer value) {
+                           // Log.d(TAG,"queryContactsFromDB onNext:value="+value.intValue());
+                          //  Log.d(TAG,"queryContactsFromDB onNext  thread:"+Thread.currentThread().getName());
+                            if(num_contacts_tv != null){
+
+                                sum = value.intValue();
+                                num_contacts_tv.setText("共有" + sum + "个联系人");
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            //Log.d(TAG,"queryContactsFromDB  onComplete");
+                           // Log.d(TAG,"queryContactsFromDB onComplete thread:"+Thread.currentThread().getName());
+                            updateData();
+                            queryNumberAttribution();
+                        }
+                    });
+    }
+
+    /**
+     *总的联系人数
      * @return
      */
 
@@ -421,29 +582,29 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     }
 
     /**
-     *
+     *查询详细信息
      */
 
     private void queryDetailInformation(){
-        Log.d(TAG,"queryDetailInformation()");
+       // Log.d(TAG,"queryDetailInformation()");
         String st = "";
         String sortString = ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY+" asc";//sort by  [A-Z]
-        String selection = ContactsContract.RawContacts.ACCOUNT_TYPE+" = ?";
-        String[] selectionArgs = {"com.android.localphone"};
 
         String[] projection = {
                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
                 ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID,
+                ContactsContract.RawContacts.ACCOUNT_TYPE,
                 "phonebook_label",
                 ContactsContract.CommonDataKinds.Phone.NUMBER,
-                ContactsContract.Contacts.DISPLAY_NAME};
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME};
 
         Cursor phone = resolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 projection,
-                selection,
-                selectionArgs, sortString);
+                null,
+                null, sortString);
         st += "----------------------------------------------- \n";
+
         while (phone.moveToNext()) {
 
             Contact contact = new Contact();
@@ -451,6 +612,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             String contactID = phone
                     .getString(phone
                             .getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+
             String phonebook_label = phone
                     .getString(phone
                             .getColumnIndex("phonebook_label"));
@@ -483,22 +645,22 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             contact.setPhonebookLabel(phonebook_label);
             contact.setName(name);
             contact.setContactAccountID(rawContactsId);
-            contact.getNumbers().add(number);
+            Number num = new Number();
+            num.setNum(number);
+            contact.getNumbers().add(num);
             contact.setContact(true);
 
 
 
             if(datas.contains(contact)){
-               // Log.d(TAG,"query  number="+number+"  name="+contact.getName());
                 Contact c = datas.get(datas.indexOf(contact));
-                c.getNumbers().add(number);
-               // Log.d(TAG,"query  numbers="+c.getNumbers().size());
+                c.getNumbers().add(num);
             }else{
                 datas.add(contact);
             }
         }
         st += "----------------------------------------------- \n";
-        //  Log.d(TAG,"query  st="+st);
+       //  Log.d(TAG,"query  st="+st);
         phone.close();
     }
 
@@ -506,47 +668,54 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
      * 归属地查询
      */
     private void queryNumberAttribution(){
-        Observable.fromIterable(datas)
 
-                .filter(new Predicate<Contact>() {
-                    @Override
-                    public boolean test(Contact contact) throws Exception {
-                       // Log.d(TAG," test:"+Thread.currentThread().getName());
-                        ArrayList<String> numbers = contact.getNumbers();
-                        if(numbers != null && numbers.size()>0){
+        Observable.fromIterable(datas)
+                  .flatMap(new Function<Contact, ObservableSource<Number>>() {
+                        @Override
+                        public ObservableSource<Number> apply(Contact contact) throws Exception {
+                           // Log.d(TAG,"queryNumberAttribution apply:"+Thread.currentThread().getName());
+                            return Observable.fromIterable(contact.getNumbers());
+                        }
+
+                    })
+                  .observeOn(Schedulers.io())
+                  .doOnNext(new Consumer<Number>() {
+                        @Override
+                        public void accept(Number number) throws Exception {
+                           // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
                             SharedPreferences sharedPreferences = context.getSharedPreferences("simplecontacts", context.MODE_PRIVATE);
-                            String att = sharedPreferences.getString(numbers.get(0), "");
+                            String num = number.getNum();
+                            String att = "";
+                            att = sharedPreferences.getString(num, "");
                             if(TextUtils.isEmpty(att)){
-                                att = getAttInfo(numbers.get(0));
+                                att = getAttInfo(num);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                                editor.putString(numbers.get(0),att);
+                                editor.putString(num,att);
                                 editor.commit();
                             }
-                            contact.setAttr(att);
+                            number.setNumAttribution(att);
+                         }
+                   })
+                  .observeOn(AndroidSchedulers.mainThread())
+                  .subscribe(new Consumer<Number>() {
+                        @Override
+                        public void accept(Number number) throws Exception {
+                           // Log.d(TAG,"accept accept:"+Thread.currentThread().getName());
+                           // Log.d(TAG,"accept accept  number  num="+number.getNum()+"  attr= "+number.getNumAttribution());
                         }
-                        return true;
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<Contact>() {
-                    @Override
-                    public void accept(Contact contact) throws Exception {
-                       // Log.d(TAG," accept:"+Thread.currentThread().getName());
-                        //Log.d(TAG,"accept  contact att="+contact.getAttr());
-                    }
-                });
+                    });
+
     }
 
     /**
-     *
+     *从本地数据文件  查询归属地  assets目录下文件
      * @param num
      * @return
      */
     private String getAttInfo(String num){
         String attribution = "未知归属地";
 
-        Log.d(TAG,"readAssetsFile  num="+num);
+        //Log.d(TAG,"readAssetsFile  num="+num);
         InputStream is = null;
         try {
             is = context.getAssets().open("Mobile.txt");
@@ -613,6 +782,10 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         }
         return attribution;
     }
+
+    /**
+     *查询完成之后更新列表
+     */
     private void updateData() {
         for (int i = 0; i < datas.size(); i++) {
             Contact c = datas.get(i);
@@ -622,9 +795,13 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
             }
         }
-        adapter.notifyDataSetChanged();
+        if(adapter != null){
+            adapter.notifyDataSetChanged();
+        }
 
     }
+
+
     private PopupWindow popupWindow;
     private View popupView;
     private FrameLayout fl1;
@@ -749,18 +926,6 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             case R.id.fl4:
                 Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.dialog_share:
-                Toast.makeText(context,"分享",Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.dialog_see_more:
-                Toast.makeText(context,"查看更多",Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.dialog_send_msg:
-                Toast.makeText(context,"发短信",Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.dialog_call:
-                Toast.makeText(context,"打电话",Toast.LENGTH_SHORT).show();
-                break;
             default:
                 break;
         }
@@ -775,16 +940,15 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-           // Log.d(TAG,"onChange  selfChange="+selfChange);
-            datas.clear();
-            addData();
-            queryContactsFromDB();
+            Log.d(TAG,"onChange  selfChange="+selfChange);
+            //先查数据库总联系人人数,如果没有改变没必要去重新查询所有联系人  因为打电话 这个通知也会来
+            notifyDataChange();
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
-           // Log.d(TAG,"onChange  uri="+uri.toString());
+            Log.d(TAG,"onChange  uri="+uri.toString()+"  selfChange"+selfChange);
         }
     }
 
@@ -994,9 +1158,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         for (int i = 0; i < datas.size(); i++) {
             Contact contacts = datas.get(i);
             if (contacts != null) {
-                ArrayList<String> numbers = contacts.getNumbers();
+                ArrayList<Number> numbers = contacts.getNumbers();
                 if (numbers.size() > 0) {
-                    if (numbers.get(0).contains(key)) {
+                    if (numbers.get(0).getNum().contains(key)) {
 
                         temp.add(contacts);
                     } else {
@@ -1062,36 +1226,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
-        switch (requestCode) {
-            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    queryContactsFromDB();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    //Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
-
-
-                } else {
-                    // Permission Denied
-                    // Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show();
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -1105,12 +1240,15 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         super.onAttach(context);
         this.context = context;
         this.indexActivity = (IndexActivity) context;
+        resolver = context.getContentResolver();
+        queryContactsFromDB();
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "ContactsFragment onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+
     }
 
     @Override

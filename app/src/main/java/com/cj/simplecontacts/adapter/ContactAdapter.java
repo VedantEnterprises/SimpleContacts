@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.enity.Contact;
+import com.cj.simplecontacts.enity.Number;
 import com.cj.simplecontacts.tool.Constant;
 
 import java.util.ArrayList;
@@ -190,11 +191,12 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 holder.section.setVisibility(View.GONE);
             }
 
-            ArrayList<String> numbers = c.getNumbers();
+            ArrayList<Number> numbers = c.getNumbers();
             int size = numbers.size();
            // Log.d("test","numbers  size:"+size+"  name="+c.getName());
             if(numbers != null && size > 0){
-                String s = numbers.get(0);
+                Number num = numbers.get(0);
+                String s = num.getNum();
                 SpannableStringBuilder builder1 = new SpannableStringBuilder(
                         s);
                 if(TextUtils.isEmpty(key)) {

@@ -17,8 +17,8 @@ public class Contact {
     private String contactID;
     private String contactAccountID;
     private boolean isChecked = false;
-    private ArrayList<String> numbers = new ArrayList<>();//one contact have more than one phone number
-    private String attr;
+    private ArrayList<Number> numbers = new ArrayList<>();//one contact have more than one phone number
+
     public boolean isContact() {
         return isContact;
     }
@@ -71,20 +71,13 @@ public class Contact {
         isChecked = checked;
     }
 
-    public ArrayList<String> getNumbers() {
+    public ArrayList<Number> getNumbers() {
         return numbers;
     }
-    public void setNumbers(ArrayList<String> numbers) {
+    public void setNumbers(ArrayList<Number> numbers) {
         this.numbers = numbers;
     }
 
-    public String getAttr() {
-        return attr;
-    }
-
-    public void setAttr(String attr) {
-        this.attr = attr;
-    }
 
     /**
      * 获取关键字在名字pinying中下标集合

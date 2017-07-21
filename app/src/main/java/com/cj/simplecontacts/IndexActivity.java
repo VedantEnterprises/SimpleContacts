@@ -2,6 +2,7 @@ package com.cj.simplecontacts;
 
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -30,6 +31,9 @@ import com.cj.simplecontacts.fragment.LifeAssistantFragment;
 import com.cj.simplecontacts.fragment.MessageFragment;
 import com.cj.simplecontacts.tool.Constant;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IndexActivity extends AppCompatActivity {
     private final static String TAG = "IndexActivity";
 
@@ -42,7 +46,7 @@ public class IndexActivity extends AppCompatActivity {
     private ContactsFragment contactsFragment;
     private MessageFragment messageFragment;
     private LifeAssistantFragment lifeAssistantFragment;
-
+    private boolean isExceptionExit = false;
     private FragmentManager fragmentManager;
 
     @Override
@@ -172,41 +176,23 @@ public class IndexActivity extends AppCompatActivity {
         });
     }
 
+
+
     /**
      * 6.0 运行时权限申请
      */
     private void applyPermission(){
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_CONTACTS);
-        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_CONTACTS)) {
-                new AlertDialog.Builder(this)
-                        .setMessage("您拒绝过授予读取通讯录的权限,但是只有申请该权限,才能查询通讯录,你确定要重新申请获取权限吗？")
-                        .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                                //again request permission
-                                ActivityCompat.requestPermissions(IndexActivity.this,
-                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                        Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
-
-                            }
-                        })
-                        .setNegativeButton("no", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
-                        .create()
-                        .show();
-            }else{
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_CONTACTS},
-                        Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+        List<String> permissionsList = new ArrayList();
+        for (String permission : Constant.PERMISSIONS_ARRAY) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsList.add(permission);
             }
         }
+        if(permissionsList.size() == 0){
+            return;
+        }
+        ActivityCompat.requestPermissions(this, permissionsList.toArray(new String[permissionsList.size()]), Constant.MY_PERMISSIONS_REQUEST_CODE);
+
     }
 
     /**
@@ -236,8 +222,13 @@ public class IndexActivity extends AppCompatActivity {
 
     @Override
     public void finish() {
-        //  super.finish();
-        moveTaskToBack(true);
+        if(isExceptionExit){
+            super.finish();
+
+        }else{
+            moveTaskToBack(true);
+        }
+
     }
 
     @Override
@@ -259,26 +250,32 @@ public class IndexActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d("permission", "onRequestPermissionsResult  requestCode" + requestCode);
         switch (requestCode) {
-            case Constant.MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
-                    //   writeDatasToExternalStorage();
+            case Constant.MY_PERMISSIONS_REQUEST_CODE: {
+                for (int i=0; i<permissions.length; i++) {
+                    if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                        //Toast.makeText(this, permissions[i]+"Permission Granted！", Toast.LENGTH_SHORT).show();
+                    } else {
+                        //Toast.makeText(this, "权限被拒绝： "+permissions[i], Toast.LENGTH_SHORT).show();
+                        isExceptionExit = true;
 
-                } else {
-                    // Permission Denied
-                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                        new AlertDialog.Builder(this)
+                                .setTitle("提醒")
+                        .setMessage("因为你未授权 "+permissions[i]+" 权限,所以该应用不能正常使用")
+
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    IndexActivity.this.finish();
+                                }
+                            })
+                        .create()
+                        .show();
+                    }
                 }
                 return;
             }
 
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
