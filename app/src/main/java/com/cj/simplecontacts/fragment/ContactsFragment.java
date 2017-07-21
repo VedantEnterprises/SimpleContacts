@@ -246,7 +246,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
             @Override
             public void onSendMsgClick(int position) {
-                Toast.makeText(context,"给"+contact.getName()+"的号码:"+numbers.get(position).getNum()+" 发信息",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context,"给"+contact.getName()+"的号码:"+numbers.get(position).getNum()+" 发信息",Toast.LENGTH_SHORT).show();
+                String num = numbers.get(position).getNum();
+                Uri uri2 = Uri.parse("smsto:"+num);
+                Intent intentMessage = new Intent(Intent.ACTION_VIEW,uri2);
+                startActivity(intentMessage);
             }
         });
 
@@ -988,7 +992,6 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             adapter.setShowCheckBox(false);
             adapter.setAllItemChecked(false);
         }
-        scrollToFirstPosition();
         if(popupWindow != null){
             popupWindow.dismiss();
         }

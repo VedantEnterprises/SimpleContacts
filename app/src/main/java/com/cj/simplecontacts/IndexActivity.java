@@ -54,7 +54,7 @@ public class IndexActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "IndexActivity onCreate");
         setContentView(R.layout.activity_index);
-
+        exitByBack = false;
         initViews();
         setUpFragment();
         setUpBottomNavigationBar();
@@ -230,7 +230,7 @@ public class IndexActivity extends AppCompatActivity {
         }
 
     }
-
+    private boolean exitByBack = false;
     @Override
     public void onBackPressed() {
         if(!supportActionBar.isShowing()){
@@ -242,6 +242,8 @@ public class IndexActivity extends AppCompatActivity {
             }
         }else{
             super.onBackPressed();
+            exitByBack = true;
+
         }
 
     }
@@ -362,6 +364,12 @@ public class IndexActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "IndexActivity onResume");
+        if(exitByBack){
+            if(contactsFragment != null){
+                contactsFragment.scrollToFirstPosition();
+            }
+            exitByBack = false;
+        }
     }
 
     @Override
@@ -372,14 +380,17 @@ public class IndexActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        super.onStop();
-        if(contactsFragment != null){
-            contactsFragment.hideCheckBox();
-            contactsFragment.hideSearchBarElement();
-            contactsFragment.showAssistantAndGroup();
-            contactsFragment.scrollToFirstPosition();
-        }
         Log.d(TAG, "IndexActivity onStop");
+        if(contactsFragment != null){
+            if(!supportActionBar.isShowing()) {
+                supportActionBar.show();
+                contactsFragment.hideSearchBarElement();
+                contactsFragment.showAssistantAndGroup();
+                contactsFragment.scrollToFirstPosition();
+            }
+        }
+        super.onStop();
+
     }
 
     @Override
