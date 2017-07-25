@@ -46,14 +46,18 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cj.simplecontacts.BaseApplication;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.ContactAdapter;
 import com.cj.simplecontacts.adapter.DialogNumAttAdapter;
 import com.cj.simplecontacts.enity.Contact;
+import com.cj.simplecontacts.enity.NumAttribution;
+import com.cj.simplecontacts.enity.NumAttributionDao;
 import com.cj.simplecontacts.enity.Number;
 import com.cj.simplecontacts.tool.CharacterParser;
 import com.cj.simplecontacts.tool.Constant;
+import com.cj.simplecontacts.tool.NumberUtil;
 import com.cj.simplecontacts.view.IndexSiderBar;
 
 import java.io.BufferedReader;
@@ -685,19 +689,33 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                   .observeOn(Schedulers.io())
                   .doOnNext(new Consumer<Number>() {
                         @Override
-                        public void accept(Number number) throws Exception {
+                        public void accept(Number phoneNumber) throws Exception {
                            // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
-                            SharedPreferences sharedPreferences = context.getSharedPreferences("simplecontacts", context.MODE_PRIVATE);
-                            String num = number.getNum();
-                            String att = "";
-                            att = sharedPreferences.getString(num, "");
-                            if(TextUtils.isEmpty(att)){
-                                att = getAttInfo(num);
-                                SharedPreferences.Editor editor = sharedPreferences.edit();
-                                editor.putString(num,att);
-                                editor.commit();
+                            NumberUtil.Numbers numbers = NumberUtil.checkNumber(phoneNumber.getNum());
+                            NumberUtil.PhoneType type = numbers.getType();
+                            String code = numbers.getCode();
+                            if(NumberUtil.PhoneType.INVALIDPHONE == type){//无效的
+                                phoneNumber.setNumAttribution("未知归属地");
+                                return;
                             }
-                            number.setNumAttribution(att);
+                            Log.d(TAG,"accept  code:"+code+" type:"+type);
+                            String attribution = "";
+                            List<NumAttribution> list = BaseApplication
+                                    .getDaoInstant()
+                                    .getNumAttributionDao()
+                                    .queryBuilder()
+                                    .where(NumAttributionDao.Properties.Code.eq(code),NumAttributionDao.Properties.Type.eq(type.name()))
+                                    .list();
+                            if(list != null && list.size()>0){
+                                NumAttribution numAttribution = list.get(0);
+                                attribution = numAttribution.getAttribution();
+                                //Long id = numAttribution.getId();
+                               // Log.d(TAG,"accept accept  attribution:"+attribution+"  id ="+id);
+                            }else{
+                               // Log.d(TAG,"accept db no data");
+                                attribution = getAttInfo(type,code);
+                            }
+                            phoneNumber.setNumAttribution(attribution);
                          }
                    })
                   .observeOn(AndroidSchedulers.mainThread())
@@ -713,12 +731,11 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
     /**
      *从本地数据文件  查询归属地  assets目录下文件
-     * @param num
+     * @param
      * @return
      */
-    private String getAttInfo(String num){
+    private String getAttInfo(NumberUtil.PhoneType type, String code){
         String attribution = "未知归属地";
-
         //Log.d(TAG,"readAssetsFile  num="+num);
         InputStream is = null;
         try {
@@ -746,27 +763,37 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
 
 
-               if(num.startsWith("1")){
+               if(type == NumberUtil.PhoneType.CELLPHONE){
 
-                   if(num.trim().indexOf(seven, 0) == 0){
+                   if(code.equals(seven)){
                        if(province.equals(city)){
                            attribution = city+" "+operator;
                        }else{
                            attribution = province+"-"+city+" "+operator;
                        }
+                       NumAttribution numAttribution = new NumAttribution();
+                       numAttribution.setCode(code);
+                       numAttribution.setAttribution(attribution);
+                       numAttribution.setType(type.name());
+                       BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
                        break;
                    }else {
                        continue;
                    }
 
-               }else{
+               }else if(type == NumberUtil.PhoneType.FIXEDPHONE){
 
-                   if(num.indexOf(areaCode, 0) == 0){
+                   if(code.equals(areaCode)){
                        if(province.equals(city)){
                            attribution = city;
                        }else{
                            attribution = province+"-"+city;
                        }
+                       NumAttribution numAttribution = new NumAttribution();
+                       numAttribution.setCode(code);
+                       numAttribution.setAttribution(attribution);
+                       numAttribution.setType(type.name());
+                       BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
                        break;
                    }else {
                        continue;

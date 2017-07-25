@@ -2,6 +2,7 @@ package com.cj.simplecontacts.enity;
 
 /**
  * Created by chenjun on 17-7-18.
+ *
  */
 
 public class Number {
