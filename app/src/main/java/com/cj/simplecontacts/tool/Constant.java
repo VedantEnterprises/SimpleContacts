@@ -12,5 +12,6 @@ public class Constant {
     public static final String CONTACT_GROUP = "我的分组";
     public static final String[] PERMISSIONS_ARRAY = new String[]{
             Manifest.permission.READ_CONTACTS,
-            Manifest.permission.CALL_PHONE};
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.READ_CALL_LOG};
 }

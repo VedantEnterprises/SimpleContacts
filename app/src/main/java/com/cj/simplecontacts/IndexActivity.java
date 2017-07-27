@@ -81,7 +81,7 @@ public class IndexActivity extends AppCompatActivity {
         lifeAssistantFragment = new LifeAssistantFragment();
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.fg_container,dialFragment);
+        transaction.add(R.id.fg_container,dialFragment,"dialFragment");
         transaction.commit();
     }
 
@@ -112,48 +112,72 @@ public class IndexActivity extends AppCompatActivity {
                 switch (position){
                     case 0:
                         FragmentTransaction transaction0 = fragmentManager.beginTransaction();
-                        Fragment fragment0 = fragmentManager.findFragmentByTag("contactsFragment");
-                        if(fragment0 != null){
+
+                        Fragment cf00 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(cf00 != null){
                             transaction0.hide(contactsFragment);
                         }
+
+                        Fragment df00 = fragmentManager.findFragmentByTag("dialFragment");
+                        if(df00 != null){
+                            transaction0.show(dialFragment);
+                        }else{
+
+                            transaction0.add(R.id.fg_container,dialFragment,"dialFragment");
+                        }
+
                         transaction0.remove(messageFragment);
                         transaction0.remove(lifeAssistantFragment);
-                        transaction0.add(R.id.fg_container,dialFragment,"dialFragment");
                         transaction0.commit();
                         break;
                     case 1:
                         FragmentTransaction transaction1 = fragmentManager.beginTransaction();
-                        Fragment fragment1 = fragmentManager.findFragmentByTag("contactsFragment");
-                        if(fragment1 != null){
-                            transaction1.show(contactsFragment);
 
-                        }else {
-                            transaction1.replace(R.id.fg_container, IndexActivity.this.contactsFragment,"contactsFragment");
+                        Fragment df01 = fragmentManager.findFragmentByTag("dialFragment");
+                        if(df01 != null){
+                            transaction1.hide(dialFragment);
                         }
-                        transaction1.remove(dialFragment);
+
+                        Fragment cf01 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(cf01 != null){
+                            transaction1.show(contactsFragment);
+                        }else {
+                            transaction1.add(R.id.fg_container,contactsFragment,"contactsFragment");
+                        }
+
+
                         transaction1.remove(messageFragment);
                         transaction1.remove(lifeAssistantFragment);
-
                         transaction1.commit();
                         break;
                     case 2:
                         FragmentTransaction transaction2 = fragmentManager.beginTransaction();
-                        Fragment fragment2 = fragmentManager.findFragmentByTag("contactsFragment");
-                        if(fragment2 != null){
+                        Fragment cf02 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(cf02 != null){
                             transaction2.hide(contactsFragment);
                         }
-                        transaction2.remove(dialFragment);
+
+                        Fragment df02 = fragmentManager.findFragmentByTag("dialFragment");
+                        if(df02 != null){
+                            transaction2.hide(dialFragment);
+                        }
+
                         transaction2.remove(lifeAssistantFragment);
                         transaction2.add(R.id.fg_container,messageFragment,"messageFragment");
                         transaction2.commit();
                         break;
                     case 3:
                         FragmentTransaction transaction3 = fragmentManager.beginTransaction();
-                        Fragment fragment3 = fragmentManager.findFragmentByTag("contactsFragment");
-                        if(fragment3 != null){
+                        Fragment cf03 = fragmentManager.findFragmentByTag("contactsFragment");
+                        if(cf03 != null){
                             transaction3.hide(contactsFragment);
                         }
-                        transaction3.remove(dialFragment);
+
+                        Fragment df03 = fragmentManager.findFragmentByTag("dialFragment");
+                        if(df03 != null){
+                            transaction3.hide(dialFragment);
+                        }
+
                         transaction3.remove(messageFragment);
                         transaction3.add(R.id.fg_container,lifeAssistantFragment,"messageFragment");
                         transaction3.commit();
