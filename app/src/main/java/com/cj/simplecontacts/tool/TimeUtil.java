@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -18,22 +19,32 @@ public class TimeUtil {
         SimpleDateFormat CurrentTime1= new SimpleDateFormat("HH:mm");
         SimpleDateFormat CurrentTime2= new SimpleDateFormat("MM/dd HH:mm");
 
+
+        Calendar calendar2 = Calendar.getInstance();
         String data = "";
         try {
-            Date beginTime=new Date(time);
-            Date endTime=new Date();
+            Date date=new Date(time);
+            Date currentDate=new Date();
+
+            calendar2.setTime(currentDate);
+
+            calendar2.set(Calendar.HOUR_OF_DAY,24);
+            calendar2.set(Calendar.MINUTE,0);
+            calendar2.set(Calendar.SECOND,0);
+
             //判断是否大于两天
-            long surplus = (endTime.getTime() - beginTime.getTime())/(24*60*60*1000);
+            long surplus = (calendar2.getTimeInMillis() - date.getTime())/(24*60*60*1000);
+            Log.d("test","surplus = "+surplus);
             if(surplus < 1) {
-                data = CurrentTime1.format(beginTime);
-            }else  if(surplus == 1){
-                data = "昨天 "+CurrentTime1.format(beginTime);
-            }else  if(surplus == 2){
-                data = "前天 "+CurrentTime1.format(beginTime);
+                data = CurrentTime1.format(date);
+            }else  if(surplus < 2){
+                data = "昨天 "+CurrentTime1.format(date);
+            }else  if(surplus < 3){
+                data = "前天 "+CurrentTime1.format(date);
             }else if(surplus < 365){
-                data = CurrentTime2.format(beginTime);
+                data = CurrentTime2.format(date);
             }else{
-                data = CurrentTime.format(beginTime);
+                data = CurrentTime.format(date);
             }
 
         } catch (Exception e) {

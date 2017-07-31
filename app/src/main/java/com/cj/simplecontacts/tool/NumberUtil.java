@@ -1,7 +1,23 @@
 package com.cj.simplecontacts.tool;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.support.v4.app.ActivityCompat;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+
+import com.cj.simplecontacts.BaseApplication;
+import com.cj.simplecontacts.enity.NumAttribution;
 import com.cj.simplecontacts.enity.Number;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,6 +58,7 @@ public class NumberUtil {
          */
         INVALIDPHONE
     }
+
     public static class Numbers {
         private PhoneType type;
         /**
@@ -72,6 +89,7 @@ public class NumberUtil {
             return String.format("[number:%s, type:%s, code:%s]", number, type.name(), code);
         }
     }
+
     /**
      * 判断是否为手机号码
      *
@@ -140,4 +158,123 @@ public class NumberUtil {
         return rtNum;
     }
 
+
+    /**
+     *从本地数据文件  查询归属地  assets目录下文件
+     * @param
+     * @return
+     */
+    public static String getAttInfo(Context context, NumberUtil.PhoneType type, String code) {
+        String attribution = "未知归属地";
+        //Log.d(TAG,"readAssetsFile  num="+num);
+        InputStream is = null;
+        try {
+            is = context.getAssets().open("Mobile.txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "utf8"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] attInfo = line.split(",");
+
+                String seven = attInfo[1];
+                seven = seven.substring(1, seven.length() - 1).trim();//去掉""手机号前7位
+
+                String province = attInfo[2];
+                province = province.substring(1, province.length() - 1).trim();//省份
+
+                String city = attInfo[3];
+                city = city.substring(1, city.length() - 1).trim();//城市
+
+                String operator = attInfo[4];
+                operator = operator.substring(1, operator.length() - 1).trim().replace("中国", "");//运营商
+
+
+                String areaCode = attInfo[5];
+                areaCode = areaCode.substring(1, areaCode.length() - 1).trim();//去掉""区号
+
+
+                if (type == NumberUtil.PhoneType.CELLPHONE) {
+
+                    if (code.equals(seven)) {
+                        if (province.equals(city)) {
+                            attribution = city + " " + operator;
+                        } else {
+                            attribution = province + "-" + city + " " + operator;
+                        }
+
+                        break;
+                    } else {
+                        continue;
+                    }
+
+                } else if (type == NumberUtil.PhoneType.FIXEDPHONE) {
+
+                    if (code.equals(areaCode)) {
+                        if (province.equals(city)) {
+                            attribution = city;
+                        } else {
+                            attribution = province + "-" + city;
+                        }
+
+                        break;
+                    } else {
+                        continue;
+                    }
+
+                }
+            }
+
+        } catch (IOException e) {
+
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return attribution;
+    }
+
+    /**
+     * 判断是否是双卡
+     * @param context
+     * @return
+     */
+
+    public static boolean isMultiSim(Context context) {
+        boolean result = false;
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+        if (telecomManager != null) {
+            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
+            result = phoneAccountHandleList.size() >= 2;
+        }
+        return result;
+    }
+
+    /**
+     * 拨打电话
+     * @param context
+     * @param id
+     * @param telNum
+     */
+    public static void call(Context context, int id, String telNum){
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+
+        if(telecomManager != null){
+            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
+
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_CALL);
+            intent.setData(Uri.parse("tel:" + telNum));
+            intent.putExtra(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandleList.get(id));
+            context.startActivity(intent);
+        }
+    }
+//  用指定sim卡拨号
+
+//    添加了一个携带值
+//    phoneAccountHandleList.get(id)
+//    id为0即为卡1 ，1即为卡二  希望对你有帮助
+// 所有的选卡外呼都是在TelephonyManager和TelecomManager这两个类里面找，
+// 这是Android 原生的，从5.1版本开始原生就支持双卡拨电话了自己多看看api
 }

@@ -10,9 +10,13 @@ public class CallRecord {
     private String name;
     private String accountId;
     private String number;
+    private String location;
     private int type;
     private int duration;
     private long date;
+    private String numAttr;
+
+    private boolean isChecked;
 
     public String getId() {
         return id;
@@ -70,5 +74,53 @@ public class CallRecord {
 
     public void setDate(long date) {
         this.date = date;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getNumAttr() {
+        return numAttr;
+    }
+
+    public void setNumAttr(String numAttr) {
+        this.numAttr = numAttr;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 37 * result + (null == this.number ? 0 : this.number.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (null == obj) {
+            return false;
+        }
+        if (obj instanceof CallRecord) {
+            CallRecord c = (CallRecord) obj;
+            if(this.number != null){
+                return this.number.equals(c.getNumber());
+            }
+        }
+        return false;
     }
 }

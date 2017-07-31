@@ -237,14 +237,14 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onCallClick(int position) {
                // Toast.makeText(context,"拨打"+contact.getName()+"的号码:"+numbers.get(position).getNum(),Toast.LENGTH_SHORT).show();
-                boolean multiSim = isMultiSim(context);
+                boolean multiSim = NumberUtil.isMultiSim(context);
                // Toast.makeText(context,"拨打"+contact.getName()+"的号码:"+numbers.get(position).getNum()+"  "+multiSim,Toast.LENGTH_SHORT).show();
                 String num = numbers.get(position).getNum();
                 if(multiSim){
                     dialog.dismiss();
                     showSelectSIMDialog(num,dialog);
                 }else{
-                    call(context,0,num);
+                    NumberUtil.call(context,0,num);
                 }
             }
 
@@ -304,7 +304,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View view) {
                 //Toast.makeText(context,"用卡1拨打",Toast.LENGTH_SHORT).show();
-                call(context,0,num);
+                NumberUtil.call(context,0,num);
                 mDialog.dismiss();
             }
         });
@@ -312,7 +312,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View view) {
                // Toast.makeText(context,"用卡2拨打",Toast.LENGTH_SHORT).show();
-                call(context,1,num);
+                NumberUtil.call(context,1,num);
                 mDialog.dismiss();
             }
         });
@@ -343,49 +343,8 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         mDialog.show();
     }
 
-    /**
-     * 判断是否是双卡
-     * @param context
-     * @return
-     */
 
-    public static boolean isMultiSim(Context context){
-        boolean result = false;
-        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
-        if(telecomManager != null){
-            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
-            result = phoneAccountHandleList.size() >= 2;
-        }
-        return result;
-    }
 
-    /**
-     * 拨打电话
-     * @param context
-     * @param id
-     * @param telNum
-     */
-
-    public static void call(Context context, int id, String telNum){
-        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
-
-        if(telecomManager != null){
-            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
-
-            Intent intent = new Intent();
-            intent.setAction(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("tel:" + telNum));
-            intent.putExtra(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandleList.get(id));
-            context.startActivity(intent);
-        }
-    }
-  //  用指定sim卡拨号
-
-//    添加了一个携带值
-//    phoneAccountHandleList.get(id)
-//    id为0即为卡1 ，1即为卡二  希望对你有帮助
-// 所有的选卡外呼都是在TelephonyManager和TelecomManager这两个类里面找，
-// 这是Android 原生的，从5.1版本开始原生就支持双卡拨电话了自己多看看api
 
     private void setUpRecyclerView(){
         mRecyclerView.setHasFixedSize(true);
@@ -636,6 +595,8 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             String number = phone
                     .getString(phone
                             .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+          //  Log.d(TAG,"query  number1="+number1);
             // 对手机号码进行预处理（去掉号码前的+86、首尾空格、“-”号等）
             number = number.replaceAll("^(\\+86)", "");
             number = number.replaceAll("^(86)", "");
@@ -698,7 +659,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                                 phoneNumber.setNumAttribution("未知归属地");
                                 return;
                             }
-                            Log.d(TAG,"accept  code:"+code+" type:"+type);
+                            //Log.d(TAG,"accept  code:"+code+" type:"+type);
                             String attribution = "";
                             List<NumAttribution> list = BaseApplication
                                     .getDaoInstant()
@@ -713,7 +674,12 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                                // Log.d(TAG,"accept accept  attribution:"+attribution+"  id ="+id);
                             }else{
                                // Log.d(TAG,"accept db no data");
-                                attribution = getAttInfo(type,code);
+                                attribution = NumberUtil.getAttInfo(context,type,code);
+                                NumAttribution numAttribution = new NumAttribution();
+                                numAttribution.setCode(code);
+                                numAttribution.setAttribution(attribution);
+                                numAttribution.setType(type.name());
+                                BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
                             }
                             phoneNumber.setNumAttribution(attribution);
                          }
@@ -729,90 +695,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
     }
 
-    /**
-     *从本地数据文件  查询归属地  assets目录下文件
-     * @param
-     * @return
-     */
-    private String getAttInfo(NumberUtil.PhoneType type, String code){
-        String attribution = "未知归属地";
-        //Log.d(TAG,"readAssetsFile  num="+num);
-        InputStream is = null;
-        try {
-            is = context.getAssets().open("Mobile.txt");
-            BufferedReader br=new BufferedReader(new InputStreamReader(is,"utf8"));
-            String line;
-            while ((line=br.readLine()) != null){
-                String[] attInfo = line.split(",");
 
-                String seven = attInfo[1];
-                seven = seven.substring(1,seven.length()-1).trim();//去掉""手机号前7位
-
-                String province = attInfo[2];
-                province = province.substring(1,province.length()-1).trim();//省份
-
-                String city = attInfo[3];
-                city = city.substring(1,city.length()-1).trim();//城市
-
-                String operator = attInfo[4];
-                operator = operator.substring(1,operator.length()-1).trim().replace("中国","");//运营商
-
-
-                String areaCode = attInfo[5];
-                areaCode = areaCode.substring(1,areaCode.length()-1).trim();//去掉""区号
-
-
-
-               if(type == NumberUtil.PhoneType.CELLPHONE){
-
-                   if(code.equals(seven)){
-                       if(province.equals(city)){
-                           attribution = city+" "+operator;
-                       }else{
-                           attribution = province+"-"+city+" "+operator;
-                       }
-                       NumAttribution numAttribution = new NumAttribution();
-                       numAttribution.setCode(code);
-                       numAttribution.setAttribution(attribution);
-                       numAttribution.setType(type.name());
-                       BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
-                       break;
-                   }else {
-                       continue;
-                   }
-
-               }else if(type == NumberUtil.PhoneType.FIXEDPHONE){
-
-                   if(code.equals(areaCode)){
-                       if(province.equals(city)){
-                           attribution = city;
-                       }else{
-                           attribution = province+"-"+city;
-                       }
-                       NumAttribution numAttribution = new NumAttribution();
-                       numAttribution.setCode(code);
-                       numAttribution.setAttribution(attribution);
-                       numAttribution.setType(type.name());
-                       BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
-                       break;
-                   }else {
-                       continue;
-                   }
-
-               }
-            }
-
-        } catch (IOException e) {
-
-        }finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return attribution;
-    }
 
     /**
      *查询完成之后更新列表
@@ -972,14 +855,15 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
             Log.d(TAG,"onChange  selfChange="+selfChange);
-            //先查数据库总联系人人数,如果没有改变没必要去重新查询所有联系人  因为打电话 这个通知也会来
-            notifyDataChange();
+
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
             Log.d(TAG,"onChange  uri="+uri.toString()+"  selfChange"+selfChange);
+            //先查数据库总联系人人数,如果没有改变没必要去重新查询所有联系人  因为打电话 这个通知也会来
+            notifyDataChange();
         }
     }
 
