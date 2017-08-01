@@ -9,6 +9,9 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,7 +34,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,6 +49,7 @@ import com.cj.simplecontacts.enity.Contact;
 import com.cj.simplecontacts.enity.NumAttribution;
 import com.cj.simplecontacts.enity.NumAttributionDao;
 import com.cj.simplecontacts.enity.Number;
+import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.tool.NumberUtil;
 
 import java.util.ArrayList;
@@ -64,7 +70,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by chenjun on 2017/6/a11.
  */
 
-public class DialFragment extends Fragment {
+public class DialFragment extends Fragment implements View.OnClickListener{
     private final static String TAG = "DialFragment";
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -76,6 +82,7 @@ public class DialFragment extends Fragment {
     private ArrayList<String> nums = new ArrayList<>();//数据库中没有归属地的号码
     private Handler handler = new Handler();
     private int sum;//通话记录总条数
+    private boolean isAllSelected = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -118,14 +125,118 @@ public class DialFragment extends Fragment {
 
             @Override
             public void onLongClick(int position, View v) {
-
+                indexActivity.showActionMode(Constant.DIAL_FRAGMENT);
+                showPop(v);
             }
 
             @Override
             public void onItemChecked(int position, View v) {
-
+                int checkedCount = adapter.getCheckedCount();
+                isAllSelected = checkedCount == adapter.getItemCount();
+                indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.DIAL_FRAGMENT);
+                notifyPop(checkedCount);
             }
         });
+    }
+
+    public void hideCheckBox(){
+        if(adapter != null){
+            adapter.setShowCheckBox(false);
+            adapter.setAllItemChecked(false);
+        }
+        if(popupWindow != null){
+            popupWindow.dismiss();
+        }
+    }
+
+    public boolean isAllSelected(){
+        return this.isAllSelected;
+    }
+
+    public void setAllSelected(boolean isAllSelected){
+        this.isAllSelected = isAllSelected;//isSelectNone  fasle  当前已经全部选中
+        adapter.setAllItemChecked(isAllSelected);
+    }
+
+    private PopupWindow popupWindow;
+    private View popupView;
+    private FrameLayout fl1;
+    private FrameLayout fl2;
+    private FrameLayout fl3;
+    private TextView add_blacklist;
+    private TextView ip_call;
+    private TextView delete;
+
+
+    private void showPop(View view){
+        popupView = indexActivity.getLayoutInflater().inflate(R.layout.dial_popwindow, null);
+        fl1 = (FrameLayout) popupView.findViewById(R.id.fl1);
+        fl2 = (FrameLayout) popupView.findViewById(R.id.fl2);
+        fl3 = (FrameLayout) popupView.findViewById(R.id.fl3);
+
+        add_blacklist = (TextView) popupView.findViewById(R.id.add_blacklist);
+        ip_call = (TextView) popupView.findViewById(R.id.ip_call);
+        delete = (TextView) popupView.findViewById(R.id.delete);
+
+        fl1.setOnClickListener(this);
+        fl2.setOnClickListener(this);
+        fl3.setOnClickListener(this);
+
+        fl1.setClickable(false);
+        fl2.setClickable(false);
+        fl3.setClickable(false);
+
+        popupWindow  = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,true);
+        popupWindow.setFocusable(false);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.showAtLocation(view,Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM, 0, 0);
+
+    }
+
+
+    private void notifyPop(int checkedCount){
+        if(checkedCount>0){
+            fl1.setClickable(true);
+            fl2.setClickable(true);
+            fl3.setClickable(true);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_ipcall);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            ip_call.setCompoundDrawables(null,msgDrawable,null,null);
+            ip_call.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+        }else{
+            fl1.setClickable(false);
+            fl2.setClickable(false);
+            fl3.setClickable(false);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon_disabled);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_ipcall_disabled);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            ip_call.setCompoundDrawables(null,msgDrawable,null,null);
+            ip_call.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del_disabled);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+        }
+        popupWindow.update();
     }
 
     private void queryCallRecordFromDB() {
@@ -413,6 +524,23 @@ public class DialFragment extends Fragment {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.fl1:
+                Toast.makeText(context,"加入黑名单",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl2:
+                Toast.makeText(context,"IP拨号",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl3:
+                Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                break;
+        }
     }
 
 

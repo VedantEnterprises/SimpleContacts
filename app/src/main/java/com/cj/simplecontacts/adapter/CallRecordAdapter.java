@@ -12,12 +12,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.enity.CallRecord;
+import com.cj.simplecontacts.enity.Contact;
 import com.cj.simplecontacts.tool.TimeUtil;
 
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-        CallRecord callRecord = list.get(position);
+        final CallRecord callRecord = list.get(position);
         String accountId = callRecord.getAccountId();
         String number = callRecord.getNumber();
         String location = callRecord.getLocation();
@@ -117,12 +119,23 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
         if(isShowCheckBox){
             holder.cb.setVisibility(View.VISIBLE);
             holder.arrow.setVisibility(View.GONE);
-            if(checked){
-                holder.cb.setChecked(true);
-            }else {
-                holder.cb.setChecked(false);
-            }
+            holder.cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    callRecord.setChecked(isChecked);
+                    if(listener != null){
+                        listener.onItemChecked(position,buttonView);
+                    }
+                }
+            });
+            holder.cb.setChecked(checked);
         }else {
+            holder.arrow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(context,"去个人信息界面",Toast.LENGTH_SHORT).show();
+                }
+            });
             holder.cb.setVisibility(View.GONE);
             holder.arrow.setVisibility(View.VISIBLE);
         }
@@ -154,6 +167,30 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
             }
         });
 
+    }
+
+    public int getCheckedCount(){
+        int count = 0;
+        for(int i=0;i<list.size();i++){
+            CallRecord c = list.get(i);
+            if(c.isChecked()){
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    public void setShowCheckBox(boolean showCheckBox) {
+        isShowCheckBox = showCheckBox;
+    }
+
+    public void setAllItemChecked(boolean checked){
+
+        for(int i=0;i<list.size();i++){
+            list.get(i).setChecked(checked);
+        }
+        notifyDataSetChanged();
     }
 
     @Override

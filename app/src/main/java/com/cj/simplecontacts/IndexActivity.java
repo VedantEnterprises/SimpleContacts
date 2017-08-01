@@ -41,7 +41,8 @@ public class IndexActivity extends AppCompatActivity {
     private BottomNavigationBar bottomNavigationBar;
     private Toolbar toolbar;
     private ActionBar supportActionBar;
-    private ActionMode actionMode;
+    private ActionMode contactActionMode;
+    private ActionMode dialActionMode;
     private DialFragment dialFragment;
     private ContactsFragment contactsFragment;
     private MessageFragment messageFragment;
@@ -81,7 +82,7 @@ public class IndexActivity extends AppCompatActivity {
         lifeAssistantFragment = new LifeAssistantFragment();
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.add(R.id.fg_container,dialFragment,"dialFragment");
+        transaction.add(R.id.fg_container,dialFragment,Constant.DIAL_FRAGMENT);
         transaction.commit();
     }
 
@@ -113,17 +114,17 @@ public class IndexActivity extends AppCompatActivity {
                     case 0:
                         FragmentTransaction transaction0 = fragmentManager.beginTransaction();
 
-                        Fragment cf00 = fragmentManager.findFragmentByTag("contactsFragment");
+                        Fragment cf00 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf00 != null){
                             transaction0.hide(contactsFragment);
                         }
 
-                        Fragment df00 = fragmentManager.findFragmentByTag("dialFragment");
+                        Fragment df00 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
                         if(df00 != null){
                             transaction0.show(dialFragment);
                         }else{
 
-                            transaction0.add(R.id.fg_container,dialFragment,"dialFragment");
+                            transaction0.add(R.id.fg_container,dialFragment,Constant.DIAL_FRAGMENT);
                         }
 
                         transaction0.remove(messageFragment);
@@ -133,16 +134,16 @@ public class IndexActivity extends AppCompatActivity {
                     case 1:
                         FragmentTransaction transaction1 = fragmentManager.beginTransaction();
 
-                        Fragment df01 = fragmentManager.findFragmentByTag("dialFragment");
+                        Fragment df01 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
                         if(df01 != null){
                             transaction1.hide(dialFragment);
                         }
 
-                        Fragment cf01 = fragmentManager.findFragmentByTag("contactsFragment");
+                        Fragment cf01 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf01 != null){
                             transaction1.show(contactsFragment);
                         }else {
-                            transaction1.add(R.id.fg_container,contactsFragment,"contactsFragment");
+                            transaction1.add(R.id.fg_container,contactsFragment,Constant.CONTACTS_FRAGMENT);
                         }
 
 
@@ -152,34 +153,34 @@ public class IndexActivity extends AppCompatActivity {
                         break;
                     case 2:
                         FragmentTransaction transaction2 = fragmentManager.beginTransaction();
-                        Fragment cf02 = fragmentManager.findFragmentByTag("contactsFragment");
+                        Fragment cf02 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf02 != null){
                             transaction2.hide(contactsFragment);
                         }
 
-                        Fragment df02 = fragmentManager.findFragmentByTag("dialFragment");
+                        Fragment df02 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
                         if(df02 != null){
                             transaction2.hide(dialFragment);
                         }
 
                         transaction2.remove(lifeAssistantFragment);
-                        transaction2.add(R.id.fg_container,messageFragment,"messageFragment");
+                        transaction2.add(R.id.fg_container,messageFragment,Constant.MESSAGE_FRAGMENT);
                         transaction2.commit();
                         break;
                     case 3:
                         FragmentTransaction transaction3 = fragmentManager.beginTransaction();
-                        Fragment cf03 = fragmentManager.findFragmentByTag("contactsFragment");
+                        Fragment cf03 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf03 != null){
                             transaction3.hide(contactsFragment);
                         }
 
-                        Fragment df03 = fragmentManager.findFragmentByTag("dialFragment");
+                        Fragment df03 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
                         if(df03 != null){
                             transaction3.hide(dialFragment);
                         }
 
                         transaction3.remove(messageFragment);
-                        transaction3.add(R.id.fg_container,lifeAssistantFragment,"messageFragment");
+                        transaction3.add(R.id.fg_container,lifeAssistantFragment,Constant.LIFE_ASSISTANT_FRAGMENT);
                         transaction3.commit();
                         break;
                     default:
@@ -233,15 +234,26 @@ public class IndexActivity extends AppCompatActivity {
         supportActionBar.show();
     }
 
+    private String currentFragment = "";
+
     /**
      * 长按联系人列表 item  进入ActionMode
      */
-    public void showActionMode(){
-        if (actionMode != null) {
-            return ;
+    public void showActionMode(String fragment){
+        this.currentFragment = fragment;
+        if(Constant.CONTACTS_FRAGMENT.equals(fragment)){
+            if (contactActionMode != null) {
+                return ;
+            }
+            contactActionMode = startSupportActionMode(new ContactCallback());
+            contactActionMode.setTitle("已选(0)个");
+        }else if(Constant.DIAL_FRAGMENT.equals(fragment)){
+            if (dialActionMode != null) {
+                return ;
+            }
+            dialActionMode = startSupportActionMode(new DialCallback());
+            dialActionMode.setTitle("已选(0)个");
         }
-        actionMode = startSupportActionMode(new MyCallback());
-        actionMode.setTitle("已选(0)个");
     }
 
     @Override
@@ -308,7 +320,7 @@ public class IndexActivity extends AppCompatActivity {
     }
 
 
-    private class MyCallback implements ActionMode.Callback {
+    private class ContactCallback implements ActionMode.Callback {
 
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -324,7 +336,7 @@ public class IndexActivity extends AppCompatActivity {
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             int id = item.getItemId();
-            Log.d(TAG,"onCheckedChanged  item = "+item.getItemId()+" "+item.getTitle());
+          //  Log.d(TAG,"onCheckedChanged  item = "+item.getItemId()+" "+item.getTitle());
             //noinspection SimplifiableIfStatement
             if (id == R.id.action_multi_none_select) {
                // Toast.makeText(IndexActivity.this,"单选复选",Toast.LENGTH_SHORT).show();
@@ -339,7 +351,7 @@ public class IndexActivity extends AppCompatActivity {
                 }
                 return true;
             }
-            // mode.finish();
+
             return true;
         }
 
@@ -352,24 +364,82 @@ public class IndexActivity extends AppCompatActivity {
                 contactsFragment.showAssistantAndGroup();
                 contactsFragment.scrollToFirstPosition();
             }
-            actionMode = null;
+            contactActionMode = null;
         }
     }
+
+    private class DialCallback implements ActionMode.Callback {
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.action_mode_menu, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int id = item.getItemId();
+            //  Log.d(TAG,"onCheckedChanged  item = "+item.getItemId()+" "+item.getTitle());
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_multi_none_select) {
+                // Toast.makeText(IndexActivity.this,"单选复选",Toast.LENGTH_SHORT).show();
+                if(dialFragment != null){
+                    if(dialFragment.isAllSelected()){
+                        dialFragment.setAllSelected(false);
+                        item.setIcon(R.drawable.iab_multi_select);
+                    }else {
+                        dialFragment.setAllSelected(true);
+                        item.setIcon(R.drawable.iab_multi_none_select);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            Log.d(TAG,"onDestroyActionMode = ");
+            if(dialFragment != null) {
+                dialFragment.hideCheckBox();
+            }
+            dialActionMode = null;
+        }
+    }
+
 
     /**
      * 长按联系人列表 item  选择某个item时 通知选中的个数
      * @param count
      */
-    public void notifyCheckedItem(int count,boolean isAllSelected){
-        if(actionMode != null){
-            actionMode.setTitle("已选("+count+")个");
-            MenuItem item = actionMode.getMenu().findItem(R.id.action_multi_none_select);
-            if(!isAllSelected ){
-                item.setIcon(R.drawable.iab_multi_select);
-            }else{
-                item.setIcon(R.drawable.iab_multi_none_select);
+    public void notifyCheckedItem(int count,boolean isAllSelected,String fragment){
+        if(Constant.CONTACTS_FRAGMENT.equals(fragment)){
+            if(contactActionMode != null){
+                contactActionMode.setTitle("已选("+count+")个");
+                MenuItem item = contactActionMode.getMenu().findItem(R.id.action_multi_none_select);
+                if(!isAllSelected ){
+                    item.setIcon(R.drawable.iab_multi_select);
+                }else{
+                    item.setIcon(R.drawable.iab_multi_none_select);
+                }
+            }
+        }else if(Constant.DIAL_FRAGMENT.equals(fragment)){
+            if(dialActionMode != null){
+                dialActionMode.setTitle("已选("+count+")个");
+                MenuItem item = dialActionMode.getMenu().findItem(R.id.action_multi_none_select);
+                if(!isAllSelected ){
+                    item.setIcon(R.drawable.iab_multi_select);
+                }else{
+                    item.setIcon(R.drawable.iab_multi_none_select);
+                }
             }
         }
+
     }
 
     @Override

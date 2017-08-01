@@ -379,7 +379,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 }else{
                     isAllSelected = false;
                 }
-                indexActivity.notifyCheckedItem(checkedCount,isAllSelected);
+                indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.CONTACTS_FRAGMENT);
                 HideSoftInput();
                 notifyPop(checkedCount);
             }
@@ -394,7 +394,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 }
                 indexActivity.showToolbar();
                 hideSearchBarElement();
-                indexActivity.showActionMode();
+                indexActivity.showActionMode(Constant.CONTACTS_FRAGMENT);
                 isAllSelected = false;
                 showPop(v);
             }

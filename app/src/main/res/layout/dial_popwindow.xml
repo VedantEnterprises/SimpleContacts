@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    >
+    <FrameLayout
+        android:clickable="true"
+        android:id="@+id/fl1"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:padding="10dp"
+        android:layout_height="wrap_content">
+        <TextView
+            android:textColor="#22000000"
+            android:id="@+id/add_blacklist"
+            android:drawableTop="@drawable/bottom_remove_icon_disabled"
+            android:layout_gravity="center"
+            android:text="加入黑名单"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+    <FrameLayout
+        android:clickable="true"
+        android:id="@+id/fl2"
+        android:padding="10dp"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
+        <TextView
+            android:textColor="#22000000"
+            android:id="@+id/ip_call"
+            android:drawableTop="@drawable/mca_bottom_item_ipcall_disabled"
+            android:layout_gravity="center"
+            android:text="IP拨号"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:clickable="true"
+        android:id="@+id/fl3"
+        android:padding="10dp"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
+        <TextView
+            android:textColor="#22000000"
+            android:id="@+id/delete"
+            android:drawableTop="@drawable/mca_bottom_item_del_disabled"
+            android:layout_gravity="center"
+            android:text="删除"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+</LinearLayout>

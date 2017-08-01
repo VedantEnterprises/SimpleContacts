@@ -146,13 +146,6 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 }
             });
 
-            holder.cb.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //  Toast.makeText(context,"clic cb position="+position,Toast.LENGTH_SHORT).show();
-                }
-            });
-
             if(isShowCheckBox){
                 holder.cb.setVisibility(View.VISIBLE);
                 if(c.isChecked()){

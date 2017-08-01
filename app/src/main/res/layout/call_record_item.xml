@@ -21,18 +21,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/ll"
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <LinearLayout
                 android:paddingLeft="2dp"
-                android:paddingRight="13dp"
+                android:paddingRight="30dp"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -79,23 +78,30 @@
 
             </LinearLayout>
 
-            <ImageView
-                android:layout_gravity="center_vertical"
-                android:id="@+id/call_log_arrow"
-                android:src="@drawable/calllog_list_item_arrow"
+            <RelativeLayout
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:clickable="true"
+                    android:layout_gravity="center_vertical"
+                    android:id="@+id/call_log_arrow"
+                    android:src="@drawable/calllog_list_item_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
-            <CheckBox
-                android:layout_gravity="center_vertical"
-                android:background="@null"
-                android:button="@drawable/call_log_check_box_bg"
-                android:visibility="gone"
-                android:id="@+id/call_log_cb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                <CheckBox
+                    android:layout_gravity="center_vertical"
+                    android:background="@null"
+                    android:button="@drawable/call_log_check_box_bg"
+                    android:visibility="gone"
+                    android:id="@+id/call_log_cb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
-        </LinearLayout>
+            </RelativeLayout>
+        </RelativeLayout>
 
         <View
             android:layout_marginTop="9dp"
