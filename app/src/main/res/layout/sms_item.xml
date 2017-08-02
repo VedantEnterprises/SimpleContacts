@@ -8,15 +8,15 @@
     android:orientation="horizontal">
 
     <ImageView
-        android:layout_marginLeft="12dp"
         android:layout_gravity="center_vertical"
-        android:id="@+id/call_log_iv"
-        android:src="@drawable/ic_call_log_list_default_call"
+        android:layout_marginLeft="12dp"
+        android:id="@+id/sms_iv"
+        android:src="@drawable/default_contact_head_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
     <RelativeLayout
-        android:layout_marginRight="15dp"
+        android:layout_marginRight="8dp"
         android:layout_marginLeft="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content">
             <LinearLayout
                 android:paddingLeft="2dp"
-                android:paddingRight="30dp"
+                android:paddingRight="15dp"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
                 android:orientation="vertical"
@@ -37,71 +37,41 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
                     <TextView
-                        android:id="@+id/call_name"
-                        android:textSize="17sp"
-                        android:text="京东快递"
+                        android:textColor="#bb000000"
+                        android:id="@+id/sms_address"
+                        android:textSize="15sp"
+                        android:text="10086100"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
 
                     <TextView
-
                         android:layout_centerVertical="true"
                         android:layout_alignParentRight="true"
-                        android:id="@+id/call_date"
-                        android:textSize="13sp"
+                        android:id="@+id/sms_date"
+                        android:textSize="10sp"
                         android:text="12:33"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </RelativeLayout>
 
-                <RelativeLayout
+                <LinearLayout
+                    android:layout_marginTop="3dp"
+                    android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
                     <TextView
                         android:layout_marginLeft="3dp"
-                        android:id="@+id/call_number"
-                        android:textSize="15sp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:id="@+id/sms_body"
+                        android:textSize="13sp"
                         android:text="13524326109"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
 
-                    <TextView
-                        android:paddingLeft="3dp"
-                        android:paddingRight="3dp"
-                        android:layout_centerVertical="true"
-                        android:layout_alignParentRight="true"
-                        android:id="@+id/call_sim"
-                        android:textSize="11sp"
-                        android:text="卡1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </RelativeLayout>
+                </LinearLayout>
 
             </LinearLayout>
-
-            <RelativeLayout
-                android:layout_centerVertical="true"
-                android:layout_alignParentRight="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-                <ImageView
-                    android:clickable="true"
-                    android:layout_gravity="center_vertical"
-                    android:id="@+id/call_log_arrow"
-                    android:src="@drawable/calllog_list_item_arrow"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <CheckBox
-                    android:layout_gravity="center_vertical"
-                    android:background="@null"
-                    android:button="@drawable/call_log_check_box_bg"
-                    android:visibility="gone"
-                    android:id="@+id/call_log_cb"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </RelativeLayout>
         </RelativeLayout>
 
         <View

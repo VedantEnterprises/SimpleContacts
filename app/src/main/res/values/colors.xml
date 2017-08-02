@@ -19,4 +19,5 @@
 
     <color name="select_sim_cancel">#00FFFFFF</color>
     <color name="select_sim_cancel_press">#18000000</color>
+    <color name="number_color">#bb000000</color>
 </resources>
