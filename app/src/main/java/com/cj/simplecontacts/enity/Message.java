@@ -15,6 +15,7 @@ public class Message {
     private int type;//类型 1是**到的，2是发出的
     private int subID;//2为卡1  3为卡2
     private String body;//内容
+    private boolean isChecked;
 
     public int get_id() {
         return _id;
@@ -94,6 +95,14 @@ public class Message {
 
     public void setSubID(int subID) {
         this.subID = subID;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 
     @Override

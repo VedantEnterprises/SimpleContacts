@@ -11,6 +11,7 @@ import android.telecom.TelecomManager;
 
 import com.cj.simplecontacts.BaseApplication;
 import com.cj.simplecontacts.enity.NumAttribution;
+import com.cj.simplecontacts.enity.NumAttributionDao;
 import com.cj.simplecontacts.enity.Number;
 
 import java.io.BufferedReader;
@@ -158,13 +159,34 @@ public class NumberUtil {
         return rtNum;
     }
 
+    /**
+     * 从数据库查询
+     * @param phoneType
+     * @param code
+     * @return
+     */
+    public static String getAttInfo(NumberUtil.PhoneType phoneType,String code){
+        String attribution = "";
+        List<NumAttribution> list = BaseApplication
+                .getDaoInstant()
+                .getNumAttributionDao()
+                .queryBuilder()
+                .where(NumAttributionDao.Properties.Code.eq(code),NumAttributionDao.Properties.Type.eq(phoneType.name()))
+                .list();
+        if(list != null && list.size()>0){
+            NumAttribution numAttribution = list.get(0);
+            attribution = numAttribution.getAttribution();
+        }
+        return attribution;
+    }
+
 
     /**
      *从本地数据文件  查询归属地  assets目录下文件
      * @param
      * @return
      */
-    public static String getAttInfo(Context context, NumberUtil.PhoneType type, String code) {
+    public  static String getAttInfo(Context context, NumberUtil.PhoneType type, String code) {
         String attribution = "未知归属地";
         //Log.d(TAG,"readAssetsFile  num="+num);
         InputStream is = null;
@@ -235,6 +257,27 @@ public class NumberUtil {
         return attribution;
     }
 
+    public static String getNameByNum(String num){
+        String str = "";
+        if(Constant.CHINA_MOBILE_NUM_1.equals(num) || Constant.CHINA_MOBILE_NUM_2.equals(num) || Constant.CHINA_MOBILE_NUM_3.equals(num)){
+            str = Constant.CHINA_MOBILE;
+        }else if(Constant.CHINA_UNICOM_NUM_1.equals(num) || Constant.CHINA_UNICOM_NUM_2.equals(num)){
+            str = Constant.CHINA_UNICOM;
+        }else if(Constant.CMB_NUM_1.equals(num)){
+            str = Constant.CMB;
+        }else if(Constant.WEI_SAI_NUM_1.equals(num)){
+            str = Constant.WEI_SAI;
+        }else if(Constant.MO_BIKE_NUM_1.equals(num)){
+            str = Constant.MO_BIKE;
+        }else if(Constant.CSDN_NUM_1.equals(num)){
+            str = Constant.CSDN;
+        }else if(Constant.AI_KANG_NUM_1.equals(num)){
+            str = Constant.AI_KANG;
+        }
+
+        return str;
+    }
+
     /**
      * 判断是否是双卡
      * @param context
@@ -250,6 +293,7 @@ public class NumberUtil {
         }
         return result;
     }
+
 
     /**
      * 拨打电话

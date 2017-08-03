@@ -5,6 +5,9 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,13 +20,23 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cj.simplecontacts.IndexActivity;
@@ -31,6 +44,8 @@ import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.CallRecordAdapter;
 import com.cj.simplecontacts.adapter.SmsAdapter;
 import com.cj.simplecontacts.enity.Message;
+import com.cj.simplecontacts.tool.Constant;
+import com.cj.simplecontacts.tool.NumberUtil;
 
 import java.util.ArrayList;
 
@@ -46,9 +61,14 @@ import io.reactivex.schedulers.Schedulers;
  * Created by chenjun on 2017/6/a11.
  */
 
-public class MessageFragment extends Fragment {
+public class MessageFragment extends Fragment implements View.OnClickListener{
     private final static String TAG = "MessageFragment";
     private RecyclerView mRecyclerView;
+    private EditText search_et;
+    private TextView num_sms_tv;
+    private TextView cancel_search_tv;
+    private ImageView search_clean_iv;
+    private ImageView search_iv;
 
     private LinearLayoutManager mLayoutManager;
     private Context context;
@@ -58,7 +78,7 @@ public class MessageFragment extends Fragment {
     private int sum = 0;//总的联系人
     private SmsAdapter adapter;
     private Handler handler = new Handler();
-
+    private boolean isAllSelected = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,13 +92,23 @@ public class MessageFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "MessageFragment onCreateView");
         View view = inflater.inflate(R.layout.message_fragment, null);
-        mRecyclerView = (RecyclerView) view.findViewById(R.id.rv_sms);
+        initViews(view);
+
         setUpRecyclerView();
 
         MessageFragment.MyContentObserver contentObserver = new MessageFragment.MyContentObserver(handler);
         resolver.registerContentObserver(Uri.parse("content://sms"), true, contentObserver);
-
+        setListener();
         return view;
+    }
+
+    private void initViews(View view) {
+        search_et = (EditText) view.findViewById(R.id.search_et);
+        num_sms_tv = (TextView) view.findViewById(R.id.num_sms_tv);
+        cancel_search_tv = (TextView) view.findViewById(R.id.cancel_tv);
+        search_clean_iv = (ImageView) view.findViewById(R.id.search_clean_iv);
+        search_iv = (ImageView) view.findViewById(R.id.search_iv);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.rv_sms);
     }
 
     private void setUpRecyclerView(){
@@ -88,6 +118,129 @@ public class MessageFragment extends Fragment {
         mRecyclerView.setLayoutManager(mLayoutManager);
         adapter = new SmsAdapter(datas, context);
         mRecyclerView.setAdapter(adapter);
+
+        adapter.setReclerViewItemListener(new SmsAdapter.ReclerViewItemListener() {
+            @Override
+            public void onItemClick(int position) {
+                HideSoftInput();
+                Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLongClick(int position, View v) {
+                HideSoftInput();
+                indexActivity.showToolbar();
+                indexActivity.showActionMode(Constant.MESSAGE_FRAGMENT);
+                hideSearchBarElement();
+                isAllSelected = false;
+                showPop(v);
+            }
+
+            @Override
+            public void onItemChecked(int position, View v) {
+                int checkedCount = adapter.getCheckedCount();
+                isAllSelected = checkedCount == adapter.getItemCount();
+                indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.MESSAGE_FRAGMENT);
+                HideSoftInput();
+                notifyPop(checkedCount);
+            }
+        });
+
+    }
+    private void setListener() {
+        search_et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    Log.d(TAG, "onFocusChange  hasFocus == true");
+                    if(adapter != null && !adapter.isShowCheckBox()){
+                        indexActivity.hideToolbar();
+                    }
+                    num_sms_tv.setVisibility(View.GONE);
+                    cancel_search_tv.setVisibility(View.VISIBLE);
+                    search_iv.setVisibility(View.VISIBLE);
+                } else {
+                    indexActivity.showToolbar();
+                    num_sms_tv.setVisibility(View.VISIBLE);
+                    cancel_search_tv.setVisibility(View.GONE);
+                    search_iv.setVisibility(View.GONE);
+                }
+            }
+        });
+        search_et.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                //Log.d(TAG, "beforeTextChanged");
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                //Log.d(TAG, "onTextChanged");
+                String string = search_et.getText().toString();
+                if (TextUtils.isEmpty(string)) {
+                    search_iv.setVisibility(View.GONE);
+                    search_clean_iv.setVisibility(View.GONE);
+                } else {
+                    search_iv.setVisibility(View.VISIBLE);
+                    search_clean_iv.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String key = s.toString().trim();
+                //Log.d(TAG, "afterTextChanged  s=" + key);
+                int num = 0;
+                //if num  search by phone num
+                try {
+                    num = Integer.parseInt(key);
+//                    mLayoutManager.scrollToPositionWithOffset(0,0);
+//                    searchContactsByNum(num + "");
+                } catch (NumberFormatException exception) {
+                    //not num   by name
+                    // Log.d(TAG, "afterTextChanged  not num");
+                  //  searchContactsByName(key);
+                }
+            }
+        });
+
+        search_et.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "onClick  search_et");
+                search_et.setCursorVisible(true);
+                if(adapter != null && !adapter.isShowCheckBox()){
+                    indexActivity.hideToolbar();
+
+                }
+                num_sms_tv.setVisibility(View.GONE);
+                cancel_search_tv.setVisibility(View.VISIBLE);
+                search_iv.setVisibility(View.VISIBLE);
+            }
+        });
+
+        cancel_search_tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                indexActivity.showToolbar();
+              //  addData();
+                num_sms_tv.setVisibility(View.VISIBLE);
+                cancel_search_tv.setVisibility(View.GONE);
+                search_iv.setVisibility(View.GONE);
+                search_et.setText("");
+                search_clean_iv.setVisibility(View.GONE);
+                search_et.setCursorVisible(false);
+                HideSoftInput();
+            }
+        });
+
+        search_clean_iv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                search_et.setText("");
+            }
+        });
+
 
     }
 
@@ -186,6 +339,32 @@ public class MessageFragment extends Fragment {
             st += "status:" + status + "\n";
             st += "body:" + body + "\n";
 
+            if(address.startsWith("10")){
+                String name = NumberUtil.getNameByNum(address);
+                if(TextUtils.isEmpty(name)){
+
+                }else{
+                    person = name;
+                }
+            }else{
+                //去数据库里查询
+                String s = "";
+                if(!address.startsWith("+86")){
+                    s ="+86"+address;
+                }else{
+                    s = address;
+                }
+                Cursor phone = resolver.query(
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME},
+                        ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER+" = ?",
+                        new String[]{s}, null);
+                if(phone.moveToFirst()){
+                    person= phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                }
+                phone.close();
+            }
+
             message.set_id(id);
             message.setThreadID(threadID);
             message.setAddress(address);
@@ -209,6 +388,147 @@ public class MessageFragment extends Fragment {
             adapter.notifyDataSetChanged();
         }
     }
+
+    public boolean isAllSelected(){
+        return this.isAllSelected;
+    }
+
+    public void setAllSelected(boolean isAllSelected){
+        this.isAllSelected = isAllSelected;//isSelectNone  fasle  当前已经全部选中
+        adapter.setAllItemChecked(isAllSelected);
+    }
+
+    public void hideCheckBox(){
+        if(adapter != null){
+            adapter.setShowCheckBox(false);
+            adapter.setAllItemChecked(false);
+        }
+        if(popupWindow != null){
+            popupWindow.dismiss();
+        }
+    }
+
+
+    private PopupWindow popupWindow;
+    private View popupView;
+    private FrameLayout fl1;
+    private FrameLayout fl2;
+    private FrameLayout fl3;
+    private FrameLayout fl4;
+    private TextView add_blacklist;
+    private TextView much_reply;
+    private TextView mark_read;
+    private TextView delete;
+
+    private void notifyPop(int checkedCount){
+        if(checkedCount>0){
+            fl1.setClickable(true);
+            fl2.setClickable(true);
+            fl3.setClickable(true);
+            fl4.setClickable(true);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.btn_muchreply);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            much_reply.setCompoundDrawables(null,msgDrawable,null,null);
+            much_reply.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable shareDrawable = getResources().getDrawable(R.drawable.common_mark_common);
+            shareDrawable.setBounds(0, 0, shareDrawable.getMinimumWidth(), shareDrawable.getMinimumHeight());
+            mark_read.setCompoundDrawables(null,shareDrawable,null,null);
+            mark_read.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
+        }else{
+            fl1.setClickable(false);
+            fl2.setClickable(false);
+            fl3.setClickable(false);
+            fl4.setClickable(false);
+
+            Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon_disabled);
+            removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
+            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable msgDrawable = getResources().getDrawable(R.drawable.btn_muchreply_disabled);
+            msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
+            much_reply.setCompoundDrawables(null,msgDrawable,null,null);
+            much_reply.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable shareDrawable = getResources().getDrawable(R.drawable.common_mark_common_disabled);
+            shareDrawable.setBounds(0, 0, shareDrawable.getMinimumWidth(), shareDrawable.getMinimumHeight());
+            mark_read.setCompoundDrawables(null,shareDrawable,null,null);
+            mark_read.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+
+            Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del_disabled);
+            delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
+            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
+        }
+        popupWindow.update();
+    }
+
+    private void showPop(View view){
+        //show popwindow
+        popupView = indexActivity.getLayoutInflater().inflate(R.layout.sms_popwindow, null);
+        fl1 = (FrameLayout) popupView.findViewById(R.id.fl1);
+        fl2 = (FrameLayout) popupView.findViewById(R.id.fl2);
+        fl3 = (FrameLayout) popupView.findViewById(R.id.fl3);
+        fl4 = (FrameLayout) popupView.findViewById(R.id.fl4);
+
+
+
+        add_blacklist = (TextView) popupView.findViewById(R.id.add_blacklist);
+        much_reply = (TextView) popupView.findViewById(R.id.much_reply);
+        mark_read = (TextView) popupView.findViewById(R.id.mark_read);
+        delete = (TextView) popupView.findViewById(R.id.delete);
+
+        fl1.setOnClickListener(this);
+        fl2.setOnClickListener(this);
+        fl3.setOnClickListener(this);
+        fl4.setOnClickListener(this);
+
+        fl1.setClickable(false);
+        fl2.setClickable(false);
+        fl3.setClickable(false);
+        fl4.setClickable(false);
+
+        popupWindow  = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,true);
+        popupWindow.setFocusable(false);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.showAtLocation(view, Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM, 0, 0);
+
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.fl1:
+                Toast.makeText(context,"加入黑名单",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl2:
+                Toast.makeText(context,"批量回复",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl3:
+                Toast.makeText(context,"标记为已读",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.fl4:
+                Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                break;
+        }
+    }
+
 
     private class MyContentObserver extends ContentObserver {
 
@@ -348,6 +668,38 @@ public class MessageFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    public void scrollToFirstPosition(){
+        if(mLayoutManager != null){
+            mLayoutManager.scrollToPositionWithOffset(0,0);
+        }
+    }
+    /**
+     * 按back key 如果此时toolbar is hide   then show toolbar meanwhile hide some view
+     */
+    public void hideSearchBarElement(){
+        if(num_sms_tv == null|| cancel_search_tv == null || search_iv == null || search_clean_iv == null|| search_et == null){
+            return;
+        }
+
+        num_sms_tv.setVisibility(View.VISIBLE);
+        cancel_search_tv.setVisibility(View.GONE);
+        search_iv.setVisibility(View.GONE);
+        search_clean_iv.setVisibility(View.GONE);
+        search_et.setText("");
+        search_et.setCursorVisible(false);
+
+    }
+
+    /**
+     * 隐藏软键盘
+     */
+    public void HideSoftInput(){
+        InputMethodManager imm =  (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(imm != null) {
+            imm.hideSoftInputFromWindow(indexActivity.getWindow().getDecorView().getWindowToken(),
+                    0);
+        }
+    }
     @Override
     public void onStart() {
         Log.d(TAG, "MessageFragment onStart");

@@ -107,6 +107,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     private boolean isAllSelected = false;
     private int sum = 0;//总的联系人
     private Handler handler = new Handler();
+    private ArrayList<Number> nums = new ArrayList<>();//数据库中没有归属地的号码
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -415,7 +416,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                Log.d(TAG,"RecyclerView  onScrolled");
+                //Log.d(TAG,"RecyclerView  onScrolled");
                 int firstPosition = mLayoutManager.findFirstVisibleItemPosition();
                 if(firstPosition >-1){
                     int section = adapter.getSectionForPosition(firstPosition);
@@ -460,6 +461,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
                         if(value.intValue() != sum){//如果人数有变化
                             datas.clear();
+                            nums.clear();
                             addData();
                             queryContactsFromDB();
                         }else{
@@ -616,6 +618,21 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             contact.setContactAccountID(rawContactsId);
             Number num = new Number();
             num.setNum(number);
+
+            NumberUtil.Numbers numbers = NumberUtil.checkNumber(number);
+            NumberUtil.PhoneType type = numbers.getType();
+            String code = numbers.getCode();
+            if(NumberUtil.PhoneType.INVALIDPHONE == type){//无效的
+                num.setNumAttribution("未知归属地");
+
+            }else {
+                String attribution = NumberUtil.getAttInfo(type,code);
+                if(TextUtils.isEmpty(attribution)){//数据库没有存储
+                    nums.add(num);//稍后去查询
+                }
+                num.setNumAttribution(attribution);
+            }
+
             contact.getNumbers().add(num);
             contact.setContact(true);
 
@@ -638,15 +655,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
      */
     private void queryNumberAttribution(){
 
-        Observable.fromIterable(datas)
-                  .flatMap(new Function<Contact, ObservableSource<Number>>() {
-                        @Override
-                        public ObservableSource<Number> apply(Contact contact) throws Exception {
-                           // Log.d(TAG,"queryNumberAttribution apply:"+Thread.currentThread().getName());
-                            return Observable.fromIterable(contact.getNumbers());
-                        }
-
-                    })
+        Observable.fromIterable(nums)
                   .observeOn(Schedulers.io())
                   .doOnNext(new Consumer<Number>() {
                         @Override
@@ -655,33 +664,28 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                             NumberUtil.Numbers numbers = NumberUtil.checkNumber(phoneNumber.getNum());
                             NumberUtil.PhoneType type = numbers.getType();
                             String code = numbers.getCode();
+
                             if(NumberUtil.PhoneType.INVALIDPHONE == type){//无效的
                                 phoneNumber.setNumAttribution("未知归属地");
                                 return;
                             }
                             //Log.d(TAG,"accept  code:"+code+" type:"+type);
-                            String attribution = "";
-                            List<NumAttribution> list = BaseApplication
-                                    .getDaoInstant()
-                                    .getNumAttributionDao()
-                                    .queryBuilder()
-                                    .where(NumAttributionDao.Properties.Code.eq(code),NumAttributionDao.Properties.Type.eq(type.name()))
-                                    .list();
-                            if(list != null && list.size()>0){
-                                NumAttribution numAttribution = list.get(0);
-                                attribution = numAttribution.getAttribution();
-                                //Long id = numAttribution.getId();
-                               // Log.d(TAG,"accept accept  attribution:"+attribution+"  id ="+id);
-                            }else{
-                               // Log.d(TAG,"accept db no data");
+                            String attribution = NumberUtil.getAttInfo(type,code);
+                            if(TextUtils.isEmpty(attribution)){//数据库没有存储
                                 attribution = NumberUtil.getAttInfo(context,type,code);
-                                NumAttribution numAttribution = new NumAttribution();
-                                numAttribution.setCode(code);
-                                numAttribution.setAttribution(attribution);
-                                numAttribution.setType(type.name());
+                            }
+
+                            NumAttribution numAttribution = new NumAttribution();
+                            numAttribution.setCode(code);
+                            numAttribution.setAttribution(attribution);
+                            numAttribution.setType(type.name());
+                            phoneNumber.setNumAttribution(attribution);
+
+                            String s = NumberUtil.getAttInfo(type,code);
+                            if(TextUtils.isEmpty(s)){//数据库没有存储
                                 BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
                             }
-                            phoneNumber.setNumAttribution(attribution);
+
                          }
                    })
                   .observeOn(AndroidSchedulers.mainThread())

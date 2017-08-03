@@ -34,7 +34,7 @@ public class TimeUtil {
 
             //判断是否大于两天
             long surplus = (calendar2.getTimeInMillis() - date.getTime())/(24*60*60*1000);
-            Log.d("test","surplus = "+surplus);
+         //   Log.d("test","surplus = "+surplus);
             if(surplus < 1) {
                 data = CurrentTime1.format(date);
             }else  if(surplus < 2){

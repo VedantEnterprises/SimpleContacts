@@ -42,6 +42,7 @@ public class IndexActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private ActionBar supportActionBar;
     private ActionMode contactActionMode;
+    private ActionMode smsActionMode;
     private ActionMode dialActionMode;
     private DialFragment dialFragment;
     private ContactsFragment contactsFragment;
@@ -119,6 +120,11 @@ public class IndexActivity extends AppCompatActivity {
                             transaction0.hide(contactsFragment);
                         }
 
+                        Fragment mf00 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
+                        if(mf00 != null){
+                            transaction0.hide(messageFragment);
+                        }
+
                         Fragment df00 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
                         if(df00 != null){
                             transaction0.show(dialFragment);
@@ -127,7 +133,7 @@ public class IndexActivity extends AppCompatActivity {
                             transaction0.add(R.id.fg_container,dialFragment,Constant.DIAL_FRAGMENT);
                         }
 
-                        transaction0.remove(messageFragment);
+
                         transaction0.remove(lifeAssistantFragment);
                         transaction0.commit();
                         break;
@@ -138,6 +144,10 @@ public class IndexActivity extends AppCompatActivity {
                         if(df01 != null){
                             transaction1.hide(dialFragment);
                         }
+                        Fragment mf01 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
+                        if(mf01 != null){
+                            transaction1.hide(messageFragment);
+                        }
 
                         Fragment cf01 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf01 != null){
@@ -147,7 +157,6 @@ public class IndexActivity extends AppCompatActivity {
                         }
 
 
-                        transaction1.remove(messageFragment);
                         transaction1.remove(lifeAssistantFragment);
                         transaction1.commit();
                         break;
@@ -163,8 +172,14 @@ public class IndexActivity extends AppCompatActivity {
                             transaction2.hide(dialFragment);
                         }
 
+                        Fragment mf02 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
+                        if(mf02 != null){
+                            transaction2.show(messageFragment);
+                        }else {
+                            transaction2.add(R.id.fg_container,messageFragment,Constant.MESSAGE_FRAGMENT);
+                        }
+
                         transaction2.remove(lifeAssistantFragment);
-                        transaction2.add(R.id.fg_container,messageFragment,Constant.MESSAGE_FRAGMENT);
                         transaction2.commit();
                         break;
                     case 3:
@@ -179,7 +194,11 @@ public class IndexActivity extends AppCompatActivity {
                             transaction3.hide(dialFragment);
                         }
 
-                        transaction3.remove(messageFragment);
+                        Fragment mf03 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
+                        if(mf03 != null){
+                            transaction3.hide(messageFragment);
+                        }
+
                         transaction3.add(R.id.fg_container,lifeAssistantFragment,Constant.LIFE_ASSISTANT_FRAGMENT);
                         transaction3.commit();
                         break;
@@ -234,13 +253,13 @@ public class IndexActivity extends AppCompatActivity {
         supportActionBar.show();
     }
 
-    private String currentFragment = "";
+
 
     /**
      * 长按联系人列表 item  进入ActionMode
      */
     public void showActionMode(String fragment){
-        this.currentFragment = fragment;
+
         if(Constant.CONTACTS_FRAGMENT.equals(fragment)){
             if (contactActionMode != null) {
                 return ;
@@ -253,6 +272,12 @@ public class IndexActivity extends AppCompatActivity {
             }
             dialActionMode = startSupportActionMode(new DialCallback());
             dialActionMode.setTitle("已选(0)个");
+        }else if(Constant.MESSAGE_FRAGMENT.equals(fragment)){
+            if (smsActionMode != null) {
+                return ;
+            }
+            smsActionMode = startSupportActionMode(new SmsCallback());
+            smsActionMode.setTitle("已选(0)个");
         }
     }
 
@@ -276,6 +301,10 @@ public class IndexActivity extends AppCompatActivity {
                 contactsFragment.hideSearchBarElement();
                 contactsFragment.scrollToFirstPosition();
             }
+            if(messageFragment != null){
+                messageFragment.hideSearchBarElement();
+                messageFragment.scrollToFirstPosition();
+            }
         }else{
             super.onBackPressed();
             exitByBack = true;
@@ -292,6 +321,9 @@ public class IndexActivity extends AppCompatActivity {
                 for (int i=0; i<permissions.length; i++) {
                     if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
                         //Toast.makeText(this, permissions[i]+"Permission Granted！", Toast.LENGTH_SHORT).show();
+                        if(dialFragment != null){
+                            dialFragment.queryCallRecordFromDB();
+                        }
                     } else {
                         //Toast.makeText(this, "权限被拒绝： "+permissions[i], Toast.LENGTH_SHORT).show();
                         isExceptionExit = true;
@@ -412,6 +444,51 @@ public class IndexActivity extends AppCompatActivity {
         }
     }
 
+    private class SmsCallback implements ActionMode.Callback {
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.action_mode_menu, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int id = item.getItemId();
+            //  Log.d(TAG,"onCheckedChanged  item = "+item.getItemId()+" "+item.getTitle());
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_multi_none_select) {
+                // Toast.makeText(IndexActivity.this,"单选复选",Toast.LENGTH_SHORT).show();
+                if(messageFragment != null){
+                    if(messageFragment.isAllSelected()){
+                        messageFragment.setAllSelected(false);
+                        item.setIcon(R.drawable.iab_multi_select);
+                    }else {
+                        messageFragment.setAllSelected(true);
+                        item.setIcon(R.drawable.iab_multi_none_select);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            Log.d(TAG,"onDestroyActionMode = ");
+            if(messageFragment != null) {
+                messageFragment.hideCheckBox();
+            }
+            smsActionMode = null;
+        }
+    }
+
+
 
     /**
      * 长按联系人列表 item  选择某个item时 通知选中的个数
@@ -432,6 +509,16 @@ public class IndexActivity extends AppCompatActivity {
             if(dialActionMode != null){
                 dialActionMode.setTitle("已选("+count+")个");
                 MenuItem item = dialActionMode.getMenu().findItem(R.id.action_multi_none_select);
+                if(!isAllSelected ){
+                    item.setIcon(R.drawable.iab_multi_select);
+                }else{
+                    item.setIcon(R.drawable.iab_multi_none_select);
+                }
+            }
+        }else if(Constant.MESSAGE_FRAGMENT.equals(fragment)){
+            if(smsActionMode != null){
+                smsActionMode.setTitle("已选("+count+")个");
+                MenuItem item = smsActionMode.getMenu().findItem(R.id.action_multi_none_select);
                 if(!isAllSelected ){
                     item.setIcon(R.drawable.iab_multi_select);
                 }else{

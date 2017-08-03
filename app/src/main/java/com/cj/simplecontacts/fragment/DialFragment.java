@@ -79,7 +79,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
     private ContentResolver resolver;
     private ArrayList<CallRecord> datas = new ArrayList();
     private CallRecordAdapter adapter;
-    private ArrayList<String> nums = new ArrayList<>();//数据库中没有归属地的号码
+    private ArrayList<CallRecord> nums = new ArrayList<>();//数据库中没有归属地的号码
     private Handler handler = new Handler();
     private int sum;//通话记录总条数
     private boolean isAllSelected = false;
@@ -114,6 +114,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         adapter.setReclerViewItemListener(new CallRecordAdapter.ReclerViewItemListener() {
             @Override
             public void onItemClick(int position) {
+
                 CallRecord callRecord = datas.get(position);
                 boolean multiSim = NumberUtil.isMultiSim(context);
                 if(multiSim){
@@ -239,7 +240,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         popupWindow.update();
     }
 
-    private void queryCallRecordFromDB() {
+    public void queryCallRecordFromDB() {
         Log.d(TAG, "queryCallRecordFromDB");
 
         Observable.create(new ObservableOnSubscribe<String>() {
@@ -386,22 +387,9 @@ public class DialFragment extends Fragment implements View.OnClickListener{
                 callRecord.setNumAttr("未知归属地");
 
             }else {
-                String attribution = "";
-                List<NumAttribution> list = BaseApplication
-                        .getDaoInstant()
-                        .getNumAttributionDao()
-                        .queryBuilder()
-                        .where(NumAttributionDao.Properties.Code.eq(code),NumAttributionDao.Properties.Type.eq(phoneType.name()))
-                        .list();
-                if(list != null && list.size()>0){
-                    NumAttribution numAttribution = list.get(0);
-                    attribution = numAttribution.getAttribution();
-                    //Long id = numAttribution.getId();
-                    // Log.d(TAG,"accept accept  attribution:"+attribution+"  id ="+id);
-                }else{
-                    // Log.d(TAG,"accept db no data");
-                    //attribution = getAttInfo(type,code);
-                    nums.add(number);
+                String attribution = NumberUtil.getAttInfo(phoneType,code);
+                if(TextUtils.isEmpty(attribution)){//数据库没有存储
+                    nums.add(callRecord);//稍后去查询
                 }
                 callRecord.setNumAttr(attribution);
             }
@@ -438,34 +426,62 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         Log.d(TAG,"queryNumberAttribution");
         Observable.fromIterable(nums)
                 .observeOn(Schedulers.io())
-                .doOnNext(new Consumer<String>() {
+                .doOnNext(new Consumer<CallRecord>() {
                     @Override
-                    public void accept(String phoneNumber) throws Exception {
-                        Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
-                        NumberUtil.Numbers numbers = NumberUtil.checkNumber(phoneNumber);
+                    public void accept(CallRecord callRecord) throws Exception {
+                       // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
+                        NumberUtil.Numbers numbers = NumberUtil.checkNumber(callRecord.getNumber());
                         NumberUtil.PhoneType type = numbers.getType();
                         String code = numbers.getCode();
                         if(NumberUtil.PhoneType.INVALIDPHONE == type){//无效的
                             //phoneNumber.setNumAttribution("未知归属地");
                             return;
                         }
-                        Log.d(TAG,"accept  code:"+code+" type:"+type);
-                        String attribution = "";
-                        attribution = NumberUtil.getAttInfo(context,type,code);
+                       // Log.d(TAG,"accept  code:"+code+" type:"+type);
+                        //String attribution = "";
+                        String attribution = NumberUtil.getAttInfo(type,code);
+                        if(TextUtils.isEmpty(attribution)){//数据库没有存储
+                            attribution = NumberUtil.getAttInfo(context,type,code);
+                        }
                         NumAttribution numAttribution = new NumAttribution();
                         numAttribution.setCode(code);
                         numAttribution.setAttribution(attribution);
                         numAttribution.setType(type.name());
-                        BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
+                        callRecord.setNumAttr(attribution);
+
+                        String s = NumberUtil.getAttInfo(type,code);
+                        if(TextUtils.isEmpty(s)){//数据库没有存储
+                           // Log.d(TAG,"插入数据库");
+                            BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
+                        }
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<String>() {
+                .subscribe(new Observer<CallRecord>() {
                     @Override
-                    public void accept(String s) throws Exception {
+                    public void onSubscribe(Disposable d) {
 
                     }
+
+                    @Override
+                    public void onNext(CallRecord value) {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                       // Log.d(TAG,"查询完成");
+                        if(adapter != null){
+                            adapter.notifyDataSetChanged();
+                        }
+                    }
                 });
+
     }
 
 
@@ -565,7 +581,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    private Cursor getCallLogCursor() {
+    private  Cursor getCallLogCursor() {
         String sortString = CallLog.Calls.DEFAULT_SORT_ORDER;
         // CallLog.Calls.PHONE_ACCOUNT_ID  subscription_id  3=卡2  2 =卡1
         // CallLog.Calls.CACHED_NAME,  //姓名
