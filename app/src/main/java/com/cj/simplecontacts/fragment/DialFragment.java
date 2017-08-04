@@ -619,6 +619,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
                         if(cursor != null){
                             observableEmitter.onNext(cursor.getCount());
                         }
+                        cursor.close();
                         observableEmitter.onComplete();
                     }
                 })

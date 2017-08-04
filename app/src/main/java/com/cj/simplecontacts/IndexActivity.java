@@ -557,6 +557,9 @@ public class IndexActivity extends AppCompatActivity {
             }
             exitByBack = false;
         }
+        if(messageFragment != null){
+            messageFragment.notifyDataChange();
+        }
     }
 
     @Override

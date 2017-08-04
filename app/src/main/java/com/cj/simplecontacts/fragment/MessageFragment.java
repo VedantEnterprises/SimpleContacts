@@ -82,7 +82,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
     private IndexActivity indexActivity;
     private ContentResolver resolver;
     private ArrayList<Message> datas = new ArrayList<>();
-    private ArrayList<Message> temp = new ArrayList<>();
+    private ArrayList<Message> messages = new ArrayList<>();
     private int sum = 0;//总的联系人
     private SmsAdapter adapter;
     private Handler handler = new Handler();
@@ -275,7 +275,6 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             }
         }else{
             if (adapter != null) {
-                temp = null;
                 adapter.setKey("");
                 adapter.setList(datas);
                 adapter.notifyDataSetChanged();
@@ -327,7 +326,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
     private void searchNameFromDB(){
         Log.d(TAG,"queryNumberAttribution");
-        Observable.fromIterable(temp)
+        Observable.fromIterable(messages)
                 .observeOn(Schedulers.io())
                 .doOnNext(new Consumer<Message>() {
                     @Override
@@ -455,7 +454,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             message.setType(type);
             message.setBody(body);
 
-            temp.add(message);
+            messages.add(message);
             if(!datas.contains(message)){
                 message.getList().add(message);
                 datas.add(message);
@@ -639,7 +638,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    private void notifyDataChange(){
+    public void notifyDataChange(){
         Observable
                 .create(new ObservableOnSubscribe<Integer>() {
                     @Override
@@ -649,6 +648,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                         if(cursor != null){
                             observableEmitter.onNext(cursor.getCount());
                         }
+                        cursor.close();
                         observableEmitter.onComplete();
                     }
                 })
@@ -667,7 +667,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
                         if(value.intValue() != sum){//如果人数有变化
                             datas.clear();
-                            temp.clear();
+                            messages.clear();
                             querySmsFromDB();
                         }else{
                             Log.d(TAG,"notifyDataChange 信息没有变化");
