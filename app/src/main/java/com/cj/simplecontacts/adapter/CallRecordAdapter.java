@@ -127,7 +127,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     callRecord.setChecked(isChecked);
                     if(listener != null){
-                        listener.onItemChecked(position,buttonView);
+                        listener.onItemChecked(callRecord,buttonView);
                     }
                 }
             });
@@ -153,7 +153,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
                     return;
                 }
                 if(listener != null){
-                    listener.onItemClick(position);
+                    listener.onItemClick(callRecord);
                 }
             }
         });
@@ -162,7 +162,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
             @Override
             public boolean onLongClick(View v) {
                 if(listener != null){
-                    listener.onLongClick(position,v);
+                    listener.onLongClick(callRecord,v);
                 }
                 isShowCheckBox = isShowCheckBox?isShowCheckBox:true;
                 CallRecordAdapter.this.notifyDataSetChanged();
@@ -234,8 +234,8 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
     }
 
     public interface ReclerViewItemListener{
-        void onItemClick(int position);
-        void onLongClick(int position,View v);
-        void onItemChecked(int position,View v);
+        void onItemClick(CallRecord callRecord);
+        void onLongClick(CallRecord callRecord,View v);
+        void onItemChecked(CallRecord callRecord,View v);
     }
 }

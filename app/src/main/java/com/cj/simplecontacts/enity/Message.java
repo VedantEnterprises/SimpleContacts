@@ -1,5 +1,7 @@
 package com.cj.simplecontacts.enity;
 
+import java.util.ArrayList;
+
 /**
  * Created by chenjun on 17-8-2.
  */
@@ -16,6 +18,7 @@ public class Message {
     private int subID;//2为卡1  3为卡2
     private String body;//内容
     private boolean isChecked;
+    private ArrayList<Message> list = new ArrayList<>();
 
     public int get_id() {
         return _id;
@@ -103,6 +106,14 @@ public class Message {
 
     public void setChecked(boolean checked) {
         isChecked = checked;
+    }
+
+    public ArrayList<Message> getList() {
+        return list;
+    }
+
+    public void setList(ArrayList<Message> list) {
+        this.list = list;
     }
 
     @Override

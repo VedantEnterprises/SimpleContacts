@@ -118,11 +118,13 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment cf00 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf00 != null){
                             transaction0.hide(contactsFragment);
+                            contactsFragment.onHide();
                         }
 
                         Fragment mf00 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
                         if(mf00 != null){
                             transaction0.hide(messageFragment);
+                            messageFragment.onHide();
                         }
 
                         Fragment df00 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
@@ -147,6 +149,7 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment mf01 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
                         if(mf01 != null){
                             transaction1.hide(messageFragment);
+                            messageFragment.onHide();
                         }
 
                         Fragment cf01 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
@@ -165,6 +168,7 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment cf02 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf02 != null){
                             transaction2.hide(contactsFragment);
+                            contactsFragment.onHide();
                         }
 
                         Fragment df02 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
@@ -187,6 +191,7 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment cf03 = fragmentManager.findFragmentByTag(Constant.CONTACTS_FRAGMENT);
                         if(cf03 != null){
                             transaction3.hide(contactsFragment);
+                            contactsFragment.onHide();
                         }
 
                         Fragment df03 = fragmentManager.findFragmentByTag(Constant.DIAL_FRAGMENT);
@@ -197,6 +202,7 @@ public class IndexActivity extends AppCompatActivity {
                         Fragment mf03 = fragmentManager.findFragmentByTag(Constant.MESSAGE_FRAGMENT);
                         if(mf03 != null){
                             transaction3.hide(messageFragment);
+                            messageFragment.onHide();
                         }
 
                         transaction3.add(R.id.fg_container,lifeAssistantFragment,Constant.LIFE_ASSISTANT_FRAGMENT);
@@ -562,12 +568,18 @@ public class IndexActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         Log.d(TAG, "IndexActivity onStop");
-        if(contactsFragment != null){
-            if(!supportActionBar.isShowing()) {
-                supportActionBar.show();
+
+
+        if(!supportActionBar.isShowing()) {
+            supportActionBar.show();
+            if(contactsFragment != null){
                 contactsFragment.hideSearchBarElement();
                 contactsFragment.showAssistantAndGroup();
                 contactsFragment.scrollToFirstPosition();
+            }
+            if(messageFragment != null){
+                messageFragment.hideSearchBarElement();
+                messageFragment.scrollToFirstPosition();
             }
         }
         super.onStop();

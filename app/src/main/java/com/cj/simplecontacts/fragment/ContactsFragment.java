@@ -356,9 +356,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
         adapter.setReclerViewItemListener(new ContactAdapter.ReclerViewItemListener() {
             @Override
-            public void onItemClick(int position) {
+            public void onItemClick(Contact contact) {
                 HideSoftInput();
-                Contact contact = datas.get(position);
+                //Contact contact = datas.get(position);
 
                 if(contact.isContact()){
                     showContactDialog(contact);
@@ -373,7 +373,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             }
 
             @Override
-            public void onItemChecked(int position,View v) {
+            public void onItemChecked(Contact contact,View v) {
                 int checkedCount = adapter.getCheckedCount();
                 if(checkedCount == (adapter.isHaveNotContact()?adapter.getItemCount()-2:adapter.getItemCount())){
                     isAllSelected = true;
@@ -386,9 +386,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             }
 
             @Override
-            public void onLongClick(int position,View v) {
+            public void onLongClick(Contact contact,View v) {
                 HideSoftInput();
-                Contact contact = datas.get(position);
+               // Contact contact = datas.get(position);
                 if(!contact.isContact()){
                     //Toast.makeText(context,"不是联系人条目 ",Toast.LENGTH_SHORT).show();
                     return;
@@ -885,6 +885,8 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         search_clean_iv.setVisibility(View.GONE);
         search_et.setText("");
         search_et.setCursorVisible(false);
+        addData();
+        scrollToFirstPosition();
 
     }
 
@@ -992,13 +994,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View v) {
                 indexActivity.showToolbar();
-                addData();
-                num_contacts_tv.setVisibility(View.VISIBLE);
-                cancel_search_tv.setVisibility(View.GONE);
-                search_iv.setVisibility(View.GONE);
-                search_et.setText("");
-                search_clean_iv.setVisibility(View.GONE);
-                search_et.setCursorVisible(false);
+                hideSearchBarElement();
                 HideSoftInput();
             }
         });
@@ -1076,16 +1072,22 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         for (int i = 0; i < datas.size(); i++) {
             Contact contacts = datas.get(i);
             if (contacts != null) {
+                boolean flag = false;
                 ArrayList<Number> numbers = contacts.getNumbers();
-                if (numbers.size() > 0) {
-                    if (numbers.get(0).getNum().contains(key)) {
-
+                for(int j=0;j<numbers.size();j++){
+                    Number number = numbers.get(j);
+                    if(number.getNum().contains(key)){
+                        flag = true;
+                        numbers.remove(number);
+                        numbers.add(0,number);
                         temp.add(contacts);
-                    } else {
-                        ArrayList<Integer> wordIndex = contacts.getKeyIndexList(key);
-                        if (wordIndex.size() > 0) {
-                            temp.add(contacts);
-                        }
+                        break;
+                    }
+                }
+                if(!flag){
+                    ArrayList<Integer> wordIndex = contacts.getKeyIndexList(key);
+                    if (wordIndex.size() > 0) {
+                        temp.add(contacts);
                     }
                 }
 
@@ -1145,6 +1147,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     }
 
 
+    public  void onHide(){
+        hideSearchBarElement();
+    }
 
     @Override
     public void onAttach(Activity activity) {

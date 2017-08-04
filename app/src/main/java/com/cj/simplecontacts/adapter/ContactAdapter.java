@@ -60,7 +60,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                         if(isPressed){
                            // Toast.makeText(context,"长按松开:"+c.getName(),Toast.LENGTH_SHORT).show();
                             if(listener != null){
-                                listener.onLongClick(position,view);
+                                listener.onLongClick(c,view);
                             }
                             isPressed = false;
                         }
@@ -83,7 +83,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                    // Toast.makeText(context,"点击"+c.getName(),Toast.LENGTH_SHORT).show();
                 }
                 if(listener != null){
-                    listener.onItemClick(position);
+                    listener.onItemClick(c);
                 }
                 // Toast.makeText(context,"点击 pos="+position,Toast.LENGTH_SHORT).show();
 
@@ -102,7 +102,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     return true;
                 }
                 if(listener != null){
-                    listener.onLongClick(position,v);
+                    listener.onLongClick(c,v);
                 }
                 //Toast.makeText(context,"长按",Toast.LENGTH_SHORT).show();
                 isShowCheckBox = isShowCheckBox?isShowCheckBox:true;
@@ -141,7 +141,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                   //  Log.d("test","onCheckedChanged pos="+position+"  isChecked="+isChecked);
                     c.setChecked(isChecked);
                     if(listener != null){
-                        listener.onItemChecked(position,buttonView);
+                        listener.onItemChecked(c,buttonView);
                     }
                 }
             });
@@ -170,7 +170,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 for(int i=0;i<list.size();i++){
                     Integer integer = list.get(i);
                     //   Log.d("test","integer"+integer.intValue());
-                    ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorPrimaryDark));
+                    ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
                     builder.setSpan(redSpan, integer.intValue()-1, integer.intValue(),
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -190,22 +190,25 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
             if(numbers != null && size > 0){
                 Number num = numbers.get(0);
                 String s = num.getNum();
+                s = size==1?s:s+" 多号码";
                 SpannableStringBuilder builder1 = new SpannableStringBuilder(
                         s);
+                //Log.d("test","numbers  s:"+s+"  key="+key);
                 if(TextUtils.isEmpty(key)) {
-
-                    holder.number.setText(size==1?s:s+" 多号码");
+                    holder.number.setText(s);
                 }else{
+
                     int index = s.indexOf(key);
+                    Log.d("test","index  index:"+index);
                     if(index < 0){
-                        holder.number.setText(size==1?s:s+" 多号码");
+                        holder.number.setText(s);
                     }else{
-                        for(int i = 0;i<key.length();i++){
-                            ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorPrimaryDark));
+                        for(int i = index;i<key.length()+index;i++){
+                            ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
                             builder1.setSpan(redSpan, i, i+1,
                                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         }
-                        holder.number.setText(size==1?builder1:builder1+" 多号码");
+                        holder.number.setText(builder1);
                     }
                 }
             }
@@ -309,9 +312,9 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
         this.listener = listener;
     }
     public interface ReclerViewItemListener{
-        void onItemClick(int position);
-        void onLongClick(int position,View v);
-        void onItemChecked(int position,View v);
+        void onItemClick(Contact c);
+        void onLongClick(Contact c,View v);
+        void onItemChecked(Contact c,View v);
     }
 
     public  class ViewHolder extends RecyclerView.ViewHolder {

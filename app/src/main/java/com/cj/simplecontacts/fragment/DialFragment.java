@@ -113,9 +113,9 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         mRecyclerView.setAdapter(adapter);
         adapter.setReclerViewItemListener(new CallRecordAdapter.ReclerViewItemListener() {
             @Override
-            public void onItemClick(int position) {
+            public void onItemClick(CallRecord callRecord) {
 
-                CallRecord callRecord = datas.get(position);
+                //CallRecord callRecord = datas.get(position);
                 boolean multiSim = NumberUtil.isMultiSim(context);
                 if(multiSim){
                     showSelectSIMDialog(callRecord.getNumber());
@@ -125,13 +125,13 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             }
 
             @Override
-            public void onLongClick(int position, View v) {
+            public void onLongClick(CallRecord callRecord, View v) {
                 indexActivity.showActionMode(Constant.DIAL_FRAGMENT);
                 showPop(v);
             }
 
             @Override
-            public void onItemChecked(int position, View v) {
+            public void onItemChecked(CallRecord callRecord, View v) {
                 int checkedCount = adapter.getCheckedCount();
                 isAllSelected = checkedCount == adapter.getItemCount();
                 indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.DIAL_FRAGMENT);

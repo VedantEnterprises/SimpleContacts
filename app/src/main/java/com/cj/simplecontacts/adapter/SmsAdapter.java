@@ -27,6 +27,7 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
     private ArrayList<Message> list;
     private Context context;
     private boolean isShowCheckBox = false;
+    private String key;
 
     public boolean isShowCheckBox() {
         return isShowCheckBox;
@@ -71,7 +72,7 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     m.setChecked(isChecked);
                     if(listener != null){
-                        listener.onItemChecked(position,buttonView);
+                        listener.onItemChecked(m,buttonView);
                     }
                 }
             });
@@ -89,7 +90,7 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
                     return;
                 }
                 if(listener != null){
-                    listener.onItemClick(position);
+                    listener.onItemClick(m);
                 }
             }
         });
@@ -98,13 +99,21 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
             @Override
             public boolean onLongClick(View v) {
                 if(listener != null){
-                    listener.onLongClick(position,v);
+                    listener.onLongClick(m,v);
                 }
                 isShowCheckBox = isShowCheckBox?isShowCheckBox:true;
                 SmsAdapter.this.notifyDataSetChanged();
                 return true;
             }
         });
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public void setList(ArrayList<Message> list) {
+        this.list = list;
     }
 
     @Override
@@ -156,9 +165,9 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
     }
 
     public interface ReclerViewItemListener{
-        void onItemClick(int position);
-        void onLongClick(int position,View v);
-        void onItemChecked(int position,View v);
+        void onItemClick(Message m);
+        void onLongClick(Message m,View v);
+        void onItemChecked(Message m,View v);
     }
 
 }

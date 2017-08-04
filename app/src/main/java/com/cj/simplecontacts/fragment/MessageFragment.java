@@ -39,15 +39,21 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cj.simplecontacts.BaseApplication;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
 import com.cj.simplecontacts.adapter.CallRecordAdapter;
 import com.cj.simplecontacts.adapter.SmsAdapter;
+import com.cj.simplecontacts.enity.CallRecord;
+import com.cj.simplecontacts.enity.Contact;
 import com.cj.simplecontacts.enity.Message;
+import com.cj.simplecontacts.enity.NumAttribution;
 import com.cj.simplecontacts.tool.Constant;
 import com.cj.simplecontacts.tool.NumberUtil;
+import com.cj.simplecontacts.tool.SmsComparator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -55,6 +61,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -75,6 +82,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
     private IndexActivity indexActivity;
     private ContentResolver resolver;
     private ArrayList<Message> datas = new ArrayList<>();
+    private ArrayList<Message> temp = new ArrayList<>();
     private int sum = 0;//总的联系人
     private SmsAdapter adapter;
     private Handler handler = new Handler();
@@ -121,13 +129,13 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
         adapter.setReclerViewItemListener(new SmsAdapter.ReclerViewItemListener() {
             @Override
-            public void onItemClick(int position) {
+            public void onItemClick(Message m) {
                 HideSoftInput();
                 Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onLongClick(int position, View v) {
+            public void onLongClick(Message m, View v) {
                 HideSoftInput();
                 indexActivity.showToolbar();
                 indexActivity.showActionMode(Constant.MESSAGE_FRAGMENT);
@@ -137,7 +145,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             }
 
             @Override
-            public void onItemChecked(int position, View v) {
+            public void onItemChecked(Message m, View v) {
                 int checkedCount = adapter.getCheckedCount();
                 isAllSelected = checkedCount == adapter.getItemCount();
                 indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.MESSAGE_FRAGMENT);
@@ -190,17 +198,8 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             public void afterTextChanged(Editable s) {
                 String key = s.toString().trim();
                 //Log.d(TAG, "afterTextChanged  s=" + key);
-                int num = 0;
-                //if num  search by phone num
-                try {
-                    num = Integer.parseInt(key);
-//                    mLayoutManager.scrollToPositionWithOffset(0,0);
-//                    searchContactsByNum(num + "");
-                } catch (NumberFormatException exception) {
-                    //not num   by name
-                    // Log.d(TAG, "afterTextChanged  not num");
-                  //  searchContactsByName(key);
-                }
+              
+                searchSmsByKey(key);
             }
         });
 
@@ -223,13 +222,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View v) {
                 indexActivity.showToolbar();
-              //  addData();
-                num_sms_tv.setVisibility(View.VISIBLE);
-                cancel_search_tv.setVisibility(View.GONE);
-                search_iv.setVisibility(View.GONE);
-                search_et.setText("");
-                search_clean_iv.setVisibility(View.GONE);
-                search_et.setCursorVisible(false);
+                hideSearchBarElement();
                 HideSoftInput();
             }
         });
@@ -243,6 +236,53 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
 
     }
+    
+    private void searchSmsByKey(String key){
+        if(!TextUtils.isEmpty(key)){
+            mLayoutManager.scrollToPositionWithOffset(0,0);
+            ArrayList<Message> temp = new ArrayList();
+            for (int i = 0; i < datas.size(); i++) {
+                Message message = datas.get(i);
+                if (message != null) {
+                    String person = message.getPerson();
+                    String body = message.getBody();
+                    String address = message.getAddress();
+                    ArrayList<Message> list = message.getList();
+                    if((person!= null && person.contains(key)) || body.contains(key) || address.contains(key)){
+                        temp.add(message);
+                    }else{
+                        for(int j = 1; j < list.size(); j++){
+                            Message m = list.get(j);
+                            String p = m.getPerson();
+                            String b = m.getBody();
+                            String a = m.getAddress();
+                            if((p!= null && p.contains(key)) || b.contains(key) || a.contains(key)){
+                                message.setList(list);
+                                temp.add(m);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (adapter != null) {
+                String str = temp.size() > 0 ? key : "";
+                adapter.setKey(str);
+                SmsComparator sc = new SmsComparator();
+                Collections.sort(temp,sc);
+                adapter.setList(temp);
+                adapter.notifyDataSetChanged();
+            }
+        }else{
+            if (adapter != null) {
+                temp = null;
+                adapter.setKey("");
+                adapter.setList(datas);
+                adapter.notifyDataSetChanged();
+            }
+        }
+    }
+    
 
     private void querySmsFromDB(){
         Log.d(TAG,"querySmsFromDB");
@@ -280,10 +320,69 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                         //Log.d(TAG,"queryContactsFromDB  onComplete");
                         // Log.d(TAG,"queryContactsFromDB onComplete thread:"+Thread.currentThread().getName());
                         updateData();
+                        searchNameFromDB();
                     }
                 });
     }
 
+    private void searchNameFromDB(){
+        Log.d(TAG,"queryNumberAttribution");
+        Observable.fromIterable(temp)
+                .observeOn(Schedulers.io())
+                .doOnNext(new Consumer<Message>() {
+                    @Override
+                    public void accept(Message message) throws Exception {
+                        // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
+                        String address = message.getAddress();
+                        if(address.startsWith("10")){
+                            return;
+                        }
+                        //去数据库里查询
+                        String s = "";
+                        if(!address.startsWith("+86")){
+                            s ="+86"+address;
+                        }else{
+                            s = address;
+                        }
+                        Cursor phone = resolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME},
+                                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER+" = ?",
+                                new String[]{s}, null);
+                        if(phone.moveToFirst()){
+                            String person= phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                            message.setPerson(person);
+                        }
+                        phone.close();
+
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Message>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Message message) {
+                        if(message.getPerson()!= null && adapter != null){
+                            adapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        // Log.d(TAG,"查询完成");
+
+                    }
+                });
+    }
 
     private Cursor getSmsCursor(){
         // Log.d(TAG,"getSmsCursor()");
@@ -317,6 +416,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
         sum = cursor.getCount();
         while(cursor.moveToNext()){
             Message message = new Message();
+
             int id = cursor.getInt(cursor.getColumnIndex(Telephony.Sms._ID));
             int threadID = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.THREAD_ID));
             String address = cursor.getString(cursor.getColumnIndex(Telephony.Sms.ADDRESS));
@@ -341,30 +441,10 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
             if(address.startsWith("10")){
                 String name = NumberUtil.getNameByNum(address);
-                if(TextUtils.isEmpty(name)){
-
-                }else{
+                if(!TextUtils.isEmpty(name)){
                     person = name;
                 }
-            }else{
-                //去数据库里查询
-                String s = "";
-                if(!address.startsWith("+86")){
-                    s ="+86"+address;
-                }else{
-                    s = address;
-                }
-                Cursor phone = resolver.query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME},
-                        ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER+" = ?",
-                        new String[]{s}, null);
-                if(phone.moveToFirst()){
-                    person= phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                }
-                phone.close();
             }
-
             message.set_id(id);
             message.setThreadID(threadID);
             message.setAddress(address);
@@ -374,8 +454,16 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             message.setStatus(status);
             message.setType(type);
             message.setBody(body);
+
+            temp.add(message);
             if(!datas.contains(message)){
+                message.getList().add(message);
                 datas.add(message);
+            }else{
+                int i = datas.indexOf(message);
+                Message m = datas.get(i);
+                ArrayList<Message> list = m.getList();
+                list.add(message);
             }
         }
         st += "----------------------------------------------- \n";
@@ -579,6 +667,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
                         if(value.intValue() != sum){//如果人数有变化
                             datas.clear();
+                            temp.clear();
                             querySmsFromDB();
                         }else{
                             Log.d(TAG,"notifyDataChange 信息没有变化");
@@ -597,6 +686,10 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
                     }
                 });
+    }
+
+    public  void onHide(){
+        hideSearchBarElement();
     }
 
     @Override
@@ -687,8 +780,10 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
         search_clean_iv.setVisibility(View.GONE);
         search_et.setText("");
         search_et.setCursorVisible(false);
-
+        scrollToFirstPosition();
     }
+
+
 
     /**
      * 隐藏软键盘
