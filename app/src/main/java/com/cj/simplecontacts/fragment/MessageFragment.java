@@ -3,6 +3,7 @@ package com.cj.simplecontacts.fragment;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -42,6 +43,7 @@ import android.widget.Toast;
 import com.cj.simplecontacts.BaseApplication;
 import com.cj.simplecontacts.IndexActivity;
 import com.cj.simplecontacts.R;
+import com.cj.simplecontacts.SmsActivity;
 import com.cj.simplecontacts.adapter.CallRecordAdapter;
 import com.cj.simplecontacts.adapter.SmsAdapter;
 import com.cj.simplecontacts.enity.CallRecord;
@@ -132,6 +134,8 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             public void onItemClick(Message m) {
                 HideSoftInput();
                 Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, SmsActivity.class);
+                startActivity(intent);
             }
 
             @Override
@@ -153,6 +157,23 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                 notifyPop(checkedCount);
             }
         });
+
+        adapter.setAllItemChecked(false);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                HideSoftInput();
+
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                //Log.d(TAG,"RecyclerView  onScrolled");
+            }
+        });
+
 
     }
     private void setListener() {
@@ -238,9 +259,10 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
     }
     
     private void searchSmsByKey(String key){
+        ArrayList<Message> temp = new ArrayList();
         if(!TextUtils.isEmpty(key)){
             mLayoutManager.scrollToPositionWithOffset(0,0);
-            ArrayList<Message> temp = new ArrayList();
+
             for (int i = 0; i < datas.size(); i++) {
                 Message message = datas.get(i);
                 if (message != null) {
@@ -257,7 +279,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                             String b = m.getBody();
                             String a = m.getAddress();
                             if((p!= null && p.contains(key)) || b.contains(key) || a.contains(key)){
-                                message.setList(list);
+                                m.setList(list);
                                 temp.add(m);
                                 break;
                             }
@@ -275,6 +297,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             }
         }else{
             if (adapter != null) {
+                temp = null;
                 adapter.setKey("");
                 adapter.setList(datas);
                 adapter.notifyDataSetChanged();

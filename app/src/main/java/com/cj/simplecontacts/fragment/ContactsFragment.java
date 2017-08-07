@@ -1107,9 +1107,10 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
      * @param key
      */
     private void searchContactsByName(final String key) {
+        ArrayList<Contact> temp = new ArrayList();
         if (!TextUtils.isEmpty(key)) {
             mLayoutManager.scrollToPositionWithOffset(0,0);
-            ArrayList<Contact> temp = new ArrayList();
+
             for (int i = 0; i < datas.size(); i++) {
                 Contact contacts = datas.get(i);
                 if (contacts != null) {
@@ -1127,6 +1128,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             }
         } else {
             if (adapter != null) {
+                temp = null;
                 adapter.setKey("");
                 adapter.setList(datas);
                 adapter.notifyDataSetChanged();

@@ -15,36 +15,36 @@ public class TimeUtil {
 
     public static  String timeCompare(long time){
         //格式化时间
-        SimpleDateFormat CurrentTime= new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        SimpleDateFormat CurrentTime1= new SimpleDateFormat("HH:mm");
-        SimpleDateFormat CurrentTime2= new SimpleDateFormat("MM/dd HH:mm");
+        SimpleDateFormat yMDTime= new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        SimpleDateFormat hMTime= new SimpleDateFormat("HH:mm");
+        SimpleDateFormat mDTime= new SimpleDateFormat("MM/dd HH:mm");
 
 
-        Calendar calendar2 = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance();
         String data = "";
         try {
             Date date=new Date(time);
             Date currentDate=new Date();
 
-            calendar2.setTime(currentDate);
+            calendar.setTime(currentDate);
 
-            calendar2.set(Calendar.HOUR_OF_DAY,24);
-            calendar2.set(Calendar.MINUTE,0);
-            calendar2.set(Calendar.SECOND,0);
+            calendar.set(Calendar.HOUR_OF_DAY,24);
+            calendar.set(Calendar.MINUTE,0);
+            calendar.set(Calendar.SECOND,0);
 
             //判断是否大于两天
-            long surplus = (calendar2.getTimeInMillis() - date.getTime())/(24*60*60*1000);
+            long surplus = (calendar.getTimeInMillis() - date.getTime())/(24*60*60*1000);
          //   Log.d("test","surplus = "+surplus);
             if(surplus < 1) {
-                data = CurrentTime1.format(date);
+                data = hMTime.format(date);
             }else  if(surplus < 2){
-                data = "昨天 "+CurrentTime1.format(date);
+                data = "昨天 "+hMTime.format(date);
             }else  if(surplus < 3){
-                data = "前天 "+CurrentTime1.format(date);
+                data = "前天 "+hMTime.format(date);
             }else if(surplus < 365){
-                data = CurrentTime2.format(date);
+                data = mDTime.format(date);
             }else{
-                data = CurrentTime.format(date);
+                data = yMDTime.format(date);
             }
 
         } catch (Exception e) {

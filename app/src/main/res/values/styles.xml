@@ -69,4 +69,13 @@
     <!-- 遮罩层 -->
     <item name="android:backgroundDimAmount">0.5</item>
     </style>
+
+    <style name="Toolbar.titleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">16sp</item>
+
+    </style>
+    <style name="Toolbar.subTitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Subtitle">
+
+        <item name="android:textSize">14sp</item>
+    </style>
 </resources>

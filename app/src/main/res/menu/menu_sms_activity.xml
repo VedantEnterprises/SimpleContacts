@@ -1,0 +1,34 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="cj.com.actionbar01.MainActivity">
+    <item
+        android:id="@+id/clear_sms"
+        android:orderInCategory="100"
+        android:title="清空信息"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/contact_detail"
+        android:orderInCategory="100"
+        android:title="联系人详情"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/add_block_list"
+        android:orderInCategory="100"
+        android:title="加入黑名单"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/more"
+        android:orderInCategory="100"
+        android:title="更多"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/call"
+        android:orderInCategory="100"
+        android:icon="@drawable/call_btn_bg"
+        android:title="打电话"
+        app:showAsAction="always" />
+
+</menu>

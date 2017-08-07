@@ -2,7 +2,10 @@ package com.cj.simplecontacts.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,12 +61,51 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
         String body = m.getBody();
         long date = m.getDate();
         boolean checked = m.isChecked();
-        if(TextUtils.isEmpty(person)){
-            holder.name.setText(address);
+
+        String name = TextUtils.isEmpty(person)?address:person;
+
+        if(TextUtils.isEmpty(key)) {
+            holder.name.setText(name);
+            holder.body.setText(body);
         }else{
-            holder.name.setText(person);
+            SpannableStringBuilder nameBuilder = new SpannableStringBuilder(
+                    name);
+            int nameIndex = name.indexOf(key);
+            if(nameIndex < 0){
+                holder.name.setText(name);
+            }else{
+                for(int i = nameIndex;i<key.length()+nameIndex;i++){
+                    ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
+                    nameBuilder.setSpan(redSpan, i, i+1,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                holder.name.setText(nameBuilder);
+            }
+
+
+            int bodyIndex = body.indexOf(key);
+            if(bodyIndex < 0){
+                holder.body.setText(body);
+            }else{
+                int start = bodyIndex-6<0 ? 0:bodyIndex-6;
+                body = body.substring(start);
+                if(start!=0){
+                    body = "..."+body;
+                }
+                int bodyFinalIndex = body.indexOf(key);
+                SpannableStringBuilder bodyBuilder = new SpannableStringBuilder(
+                        body);
+
+                for(int i = bodyFinalIndex;i<key.length()+bodyFinalIndex;i++){
+                    ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
+                    bodyBuilder.setSpan(redSpan, i, i+1,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                holder.body.setText(bodyBuilder);
+            }
+
         }
-        holder.body.setText(body);
+
         holder.date.setText(TimeUtil.timeCompare(date));
         if(isShowCheckBox){
             holder.cb.setVisibility(View.VISIBLE);
