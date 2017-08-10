@@ -135,6 +135,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                 HideSoftInput();
                 Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(context, SmsActivity.class);
+                intent.putExtra("sms",m);
                 startActivity(intent);
             }
 
@@ -272,17 +273,14 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                     ArrayList<Message> list = message.getList();
                     if((person!= null && person.contains(key)) || body.contains(key) || address.contains(key)){
                         temp.add(message);
-                    }else{
-                        for(int j = 1; j < list.size(); j++){
-                            Message m = list.get(j);
-                            String p = m.getPerson();
-                            String b = m.getBody();
-                            String a = m.getAddress();
-                            if((p!= null && p.contains(key)) || b.contains(key) || a.contains(key)){
-                                m.setList(list);
-                                temp.add(m);
-                                break;
-                            }
+                    }
+                    for(int j = 1; j < list.size(); j++){
+                        Message m = list.get(j);
+                        String p = m.getPerson();
+                        String b = m.getBody();
+                        String a = m.getAddress();
+                        if((p!= null && p.contains(key)) || b.contains(key) || a.contains(key)){
+                            temp.add(m);
                         }
                     }
                 }
@@ -444,8 +442,8 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             String address = cursor.getString(cursor.getColumnIndex(Telephony.Sms.ADDRESS));
             String person = cursor.getString(cursor.getColumnIndex(Telephony.Sms.PERSON));
             long date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE));
-            int readStatus = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID));
-            int subID = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.READ));
+            int subID = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID));
+            int readStatus = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.READ));
             int status = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.STATUS));
             int type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE));
             String body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY));
@@ -468,6 +466,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                 }
             }
             message.set_id(id);
+            message.setSubID(subID);
             message.setThreadID(threadID);
             message.setAddress(address);
             message.setPerson(person);
@@ -479,7 +478,6 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
 
             messages.add(message);
             if(!datas.contains(message)){
-                message.getList().add(message);
                 datas.add(message);
             }else{
                 int i = datas.indexOf(message);

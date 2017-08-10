@@ -104,6 +104,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
     private ContactAdapter adapter;
 
     private ArrayList<Contact> datas = new ArrayList();
+    private ArrayList<Contact> allData = new ArrayList();
     private boolean isAllSelected = false;
     private int sum = 0;//总的联系人
     private Handler handler = new Handler();
@@ -215,8 +216,9 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
         RecyclerView rv = (RecyclerView) view.findViewById(R.id.dialog_rv);
         LinearLayout lSeeMore = (LinearLayout) view.findViewById(R.id.ll_see_more);
         TextView tvSeeMore = (TextView) view.findViewById(R.id.tv_see_more);
-
-        final ArrayList<Number> numbers = contact.getNumbers();
+        int i = datas.indexOf(contact);
+        Contact c = datas.get(i);
+        final ArrayList<Number> numbers = c.getNumbers();
        // Log.d(TAG, "showContactDialog numbers = "+numbers.size());
         if(numbers != null && numbers.size() >3){
             lSeeMore.setVisibility(View.VISIBLE);
@@ -358,8 +360,6 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onItemClick(Contact contact) {
                 HideSoftInput();
-                //Contact contact = datas.get(position);
-
                 if(contact.isContact()){
                     showContactDialog(contact);
                 }else{
@@ -461,6 +461,7 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
 
                         if(value.intValue() != sum){//如果人数有变化
                             datas.clear();
+                            allData.clear();
                             nums.clear();
                             addData();
                             queryContactsFromDB();
@@ -632,15 +633,17 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
                 }
                 num.setNumAttribution(attribution);
             }
-
+            contact.setNumber(num);
             contact.getNumbers().add(num);
             contact.setContact(true);
 
-
+            allData.add(contact);
 
             if(datas.contains(contact)){
+                contact.setMoreNum(true);
                 Contact c = datas.get(datas.indexOf(contact));
                 c.getNumbers().add(num);
+                c.setMoreNum(true);
             }else{
                 datas.add(contact);
             }
@@ -1068,32 +1071,23 @@ public class ContactsFragment extends Fragment implements View.OnClickListener{
      */
     private void searchContactsByNum(final String key) {
         Log.d(TAG, "searchContactsByNum  key=" + key);
+
         ArrayList<Contact> temp = new ArrayList();
-        for (int i = 0; i < datas.size(); i++) {
-            Contact contacts = datas.get(i);
+        for (int i = 0; i < allData.size(); i++) {
+            Contact contacts = allData.get(i);
             if (contacts != null) {
-                boolean flag = false;
-                ArrayList<Number> numbers = contacts.getNumbers();
-                for(int j=0;j<numbers.size();j++){
-                    Number number = numbers.get(j);
-                    if(number.getNum().contains(key)){
-                        flag = true;
-                        numbers.remove(number);
-                        numbers.add(0,number);
-                        temp.add(contacts);
-                        break;
-                    }
-                }
-                if(!flag){
+                Number number = contacts.getNumber();
+                if(number.getNum().contains(key)){
+                    temp.add(contacts);
+                }else{
                     ArrayList<Integer> wordIndex = contacts.getKeyIndexList(key);
                     if (wordIndex.size() > 0) {
                         temp.add(contacts);
                     }
                 }
-
             }
-
         }
+
         if (adapter != null) {
             String str = temp.size() > 0 ? key : "";
             adapter.setKey(str);

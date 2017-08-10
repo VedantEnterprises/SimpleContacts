@@ -1,12 +1,15 @@
 package com.cj.simplecontacts.enity;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
 
 /**
  * Created by chenjun on 17-8-2.
  */
 
-public class Message {
+public class Message implements Parcelable{
     private int _id;
     private int threadID;//对话id
     private String address;//手机号码
@@ -137,5 +140,42 @@ public class Message {
 
         }
         return false;
+    }
+
+    public Message(){
+
+    }
+
+    protected Message(Parcel in) {
+        threadID = in.readInt();
+        address = in.readString();
+        person = in.readString();
+    }
+
+    public static final Creator<Message> CREATOR = new Creator<Message>() {
+        @Override
+        public Message createFromParcel(Parcel in) {
+            Message message = new Message(in);
+            return message;
+        }
+
+        @Override
+        public Message[] newArray(int size) {
+            return new Message[size];
+        }
+    };
+
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(threadID);
+        dest.writeString(address);
+        dest.writeString(person);
     }
 }

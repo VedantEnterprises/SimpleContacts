@@ -171,8 +171,7 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                     Integer integer = list.get(i);
                     //   Log.d("test","integer"+integer.intValue());
                     ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
-                    builder.setSpan(redSpan, integer.intValue()-1, integer.intValue(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(redSpan, integer.intValue()-1, integer.intValue(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 holder.name.setText(builder);
             }
@@ -184,34 +183,27 @@ public class ContactAdapter extends  RecyclerView.Adapter<ContactAdapter.ViewHol
                 holder.section.setVisibility(View.GONE);
             }
 
-            ArrayList<Number> numbers = c.getNumbers();
-            int size = numbers.size();
-           // Log.d("test","numbers  size:"+size+"  name="+c.getName());
-            if(numbers != null && size > 0){
-                Number num = numbers.get(0);
-                String s = num.getNum();
-                s = size==1?s:s+" 多号码";
-                SpannableStringBuilder builder1 = new SpannableStringBuilder(
-                        s);
-                //Log.d("test","numbers  s:"+s+"  key="+key);
-                if(TextUtils.isEmpty(key)) {
+            Number num = c.getNumber();
+            String s = num.getNum();
+            s = c.isMoreNum()?s+" 多号码":s;
+            SpannableStringBuilder builder1 = new SpannableStringBuilder(s);
+            //Log.d("test","numbers  s:"+s+"  key="+key);
+            if(TextUtils.isEmpty(key)) {
+                holder.number.setText(s);
+            }else{
+                int index = s.indexOf(key);
+              //  Log.d("test","index  index:"+index);
+                if(index < 0){
                     holder.number.setText(s);
                 }else{
-
-                    int index = s.indexOf(key);
-                    Log.d("test","index  index:"+index);
-                    if(index < 0){
-                        holder.number.setText(s);
-                    }else{
-                        for(int i = index;i<key.length()+index;i++){
-                            ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
-                            builder1.setSpan(redSpan, i, i+1,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        }
-                        holder.number.setText(builder1);
+                    for(int i = index;i<key.length()+index;i++){
+                        ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.colorAccent));
+                        builder1.setSpan(redSpan, i, i+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
+                    holder.number.setText(builder1);
                 }
             }
+
         }
 
     }

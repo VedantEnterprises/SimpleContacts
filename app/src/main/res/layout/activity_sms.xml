@@ -22,7 +22,24 @@
     </android.support.design.widget.AppBarLayout>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_sms"
+        android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp">
     </android.support.v7.widget.RecyclerView>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLaymout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </LinearLaymout>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/sms_send_function"
+            android:layout_width="match_parent"
+            android:layout_height="0dp">
+        </android.support.v7.widget.RecyclerView>
+    </LinearLayout>
 </LinearLayout>

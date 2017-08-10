@@ -11,12 +11,14 @@ import java.util.ArrayList;
 
 public class Contact {
     private boolean isContact;
+    private boolean isMoreNum;
     private String name;
     private String phonebook_label;
     private String pinying;
     private String contactID;
     private String contactAccountID;
     private boolean isChecked = false;
+    private Number number;
     private ArrayList<Number> numbers = new ArrayList<>();//one contact have more than one phone number
 
     public boolean isContact() {
@@ -78,6 +80,22 @@ public class Contact {
         this.numbers = numbers;
     }
 
+    public Number getNumber() {
+        return number;
+    }
+
+    public void setNumber(Number number) {
+        this.number = number;
+    }
+
+    public void setMoreNum(boolean moreNum) {
+        isMoreNum = moreNum;
+    }
+
+
+    public boolean isMoreNum() {
+        return isMoreNum;
+    }
 
     /**
      * 获取关键字在名字pinying中下标集合
