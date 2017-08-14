@@ -26,20 +26,51 @@
         android:layout_width="match_parent"
         android:layout_height="0dp">
     </android.support.v7.widget.RecyclerView>
+
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <LinearLaymout
+        <LinearLayout
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:background="#ffffff"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
-        </LinearLaymout>
+            <ImageButton
+                android:layout_marginLeft="4dp"
+                android:background="@drawable/collapse_sms_function_bg"
+                android:id="@+id/collapse_sms_function"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:layout_marginLeft="4dp"
+                android:layout_weight="1"
+                android:hint="短信/彩信"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+            <CheckBox
+                android:background="@null"
+                android:button="@drawable/send_sms_check_box_bg"
+                android:layout_marginLeft="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:src="@drawable/iab_setting_problem_n"
+                android:layout_marginLeft="6dp"
+                android:layout_marginRight="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
 
         <android.support.v7.widget.RecyclerView
+            android:background="#05000000"
             android:id="@+id/sms_send_function"
             android:layout_width="match_parent"
-            android:layout_height="0dp">
+            android:layout_height="wrap_content">
         </android.support.v7.widget.RecyclerView>
     </LinearLayout>
 </LinearLayout>

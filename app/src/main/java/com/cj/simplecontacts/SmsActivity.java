@@ -7,6 +7,7 @@ import android.provider.Telephony;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -17,8 +18,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.cj.simplecontacts.adapter.SendSmsFunctionAdapter;
 import com.cj.simplecontacts.adapter.SmsDetailAdapter;
 import com.cj.simplecontacts.enity.Message;
+import com.cj.simplecontacts.enity.SmsFunction;
 import com.cj.simplecontacts.tool.ContactTool;
 import com.cj.simplecontacts.tool.NumberUtil;
 
@@ -37,8 +40,10 @@ public class SmsActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private ActionBar supportActionBar;
     private RecyclerView mRecyclerView;
+    private RecyclerView sendFuctionRv;
     private LinearLayoutManager mLayoutManager;
     private ArrayList<Message> datas = new ArrayList<>();
+    private ArrayList<SmsFunction> list = new ArrayList<>();
     private SmsDetailAdapter adapter;
     private int threadID = -1;
     private Message message;
@@ -69,7 +74,7 @@ public class SmsActivity extends AppCompatActivity {
     private void initView(){
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         mRecyclerView = (RecyclerView)findViewById(R.id.rv_sms);
-
+        sendFuctionRv = (RecyclerView)findViewById(R.id.sms_send_function);
     }
 
     private void setUpSupportActionBar(){
@@ -104,7 +109,55 @@ public class SmsActivity extends AppCompatActivity {
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mLayoutManager.setReverseLayout(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this,4);
+
+        sendFuctionRv.setLayoutManager(gridLayoutManager);
+        updateList();
+        SendSmsFunctionAdapter smsFunctionAdapter = new SendSmsFunctionAdapter(list,this);
+        sendFuctionRv.setAdapter(smsFunctionAdapter);
+
     }
+
+    private void updateList(){
+        list.clear();
+        SmsFunction timing = new SmsFunction();
+        timing.setName("定时");
+        timing.setDrawable(getResources().getDrawable(R.drawable.timing_clock_bg));
+
+        SmsFunction emotion = new SmsFunction();
+        emotion.setName("表情");
+        emotion.setDrawable(getResources().getDrawable(R.drawable.emoticon_enter_bg));
+
+        SmsFunction feature = new SmsFunction();
+        feature.setName("精选");
+        feature.setDrawable(getResources().getDrawable(R.drawable.featured_message_bg));
+
+        SmsFunction picture = new SmsFunction();
+        picture.setName("图片");
+        picture.setDrawable(getResources().getDrawable(R.drawable.picture_bg));
+
+        SmsFunction card = new SmsFunction();
+        card.setName("名片");
+        card.setDrawable(getResources().getDrawable(R.drawable.card_bg));
+
+        SmsFunction location = new SmsFunction();
+        location.setName("位置");
+        location.setDrawable(getResources().getDrawable(R.drawable.location_bg));
+
+        SmsFunction useful = new SmsFunction();
+        useful.setName("常用");
+        useful.setDrawable(getResources().getDrawable(R.drawable.useful_bg));
+
+        list.add(timing);
+        list.add(emotion);
+        list.add(feature);
+        list.add(picture);
+        list.add(card);
+        list.add(location);
+        list.add(useful);
+    }
+
 
 
     private void querySmsFromDB(){
