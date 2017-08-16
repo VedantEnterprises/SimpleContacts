@@ -1,6 +1,7 @@
 package com.cj.simplecontacts.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -52,10 +53,13 @@ public class SmsDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 //        Log.d("test","getBody  body:"+body);
 //        Log.d("test","getSubID  subID:"+subID);
         String sim = "";
+        int color = Color.BLACK;
         if(subID == 2){
             sim = "卡1";
+            color = context.getResources().getColor(R.color.iv_dial_up_card1_green);
         }else if(subID == 3){
             sim = "卡2";
+            color = context.getResources().getColor(R.color.iv_dial_up_card2_green);
         }else{
             sim = "";
         }
@@ -66,6 +70,7 @@ public class SmsDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 receiveViewHolder.sim.setVisibility(View.INVISIBLE);
             }else {
                 receiveViewHolder.sim.setVisibility(View.VISIBLE);
+                receiveViewHolder.sim.setTextColor(color);
                 receiveViewHolder.sim.setText(sim);
             }
             receiveViewHolder.body.setText(body);
@@ -78,6 +83,7 @@ public class SmsDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }else {
                 sendViewHolder.sim.setVisibility(View.VISIBLE);
                 sendViewHolder.sim.setText(sim);
+                sendViewHolder.sim.setTextColor(color);
             }
             sendViewHolder.body.setText(body);
         }

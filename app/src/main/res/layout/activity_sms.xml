@@ -41,32 +41,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageButton
-                android:layout_marginLeft="4dp"
+                android:layout_marginLeft="8dp"
                 android:background="@drawable/collapse_sms_function_bg"
                 android:id="@+id/collapse_sms_function"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <EditText
-                android:layout_marginLeft="4dp"
+                android:layout_marginLeft="5dp"
                 android:layout_weight="1"
                 android:hint="短信/彩信"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" />
             <CheckBox
+                android:id="@+id/select_sim"
                 android:background="@null"
                 android:button="@drawable/send_sms_check_box_bg"
                 android:layout_marginLeft="4dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <ImageView
-                android:src="@drawable/iab_setting_problem_n"
-                android:layout_marginLeft="6dp"
-                android:layout_marginRight="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:src="@drawable/send_message_gray"
+                android:layout_marginLeft="14dp"
+                android:layout_marginRight="14dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp" />
         </LinearLayout>
 
         <android.support.v7.widget.RecyclerView
+            android:visibility="gone"
             android:background="#05000000"
             android:id="@+id/sms_send_function"
             android:layout_width="match_parent"

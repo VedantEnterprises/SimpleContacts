@@ -133,7 +133,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onItemClick(Message m) {
                 HideSoftInput();
-                Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context,"查看信息对话",Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(context, SmsActivity.class);
                 intent.putExtra("sms",m);
                 startActivity(intent);

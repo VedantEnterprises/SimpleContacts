@@ -13,9 +13,15 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.cj.simplecontacts.adapter.SendSmsFunctionAdapter;
@@ -35,7 +41,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class SmsActivity extends AppCompatActivity {
+public class SmsActivity extends AppCompatActivity implements View.OnClickListener{
     private final static String TAG = "SmsActivity";
     private Toolbar toolbar;
     private ActionBar supportActionBar;
@@ -47,6 +53,8 @@ public class SmsActivity extends AppCompatActivity {
     private SmsDetailAdapter adapter;
     private int threadID = -1;
     private Message message;
+    private ImageButton collapseSmsFunction;
+    private CheckBox selectSim;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +76,36 @@ public class SmsActivity extends AppCompatActivity {
         }else{
             Log.d(TAG,"message is null ");
         }
-
+        addListener();
+        createAnimation();
     }
+
+
 
     private void initView(){
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         mRecyclerView = (RecyclerView)findViewById(R.id.rv_sms);
         sendFuctionRv = (RecyclerView)findViewById(R.id.sms_send_function);
+        collapseSmsFunction = (ImageButton) findViewById(R.id.collapse_sms_function);
+        selectSim = (CheckBox) findViewById(R.id.select_sim);
+    }
+
+    private void addListener() {
+        collapseSmsFunction.setOnClickListener(this);
+        selectSim.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    Toast t2 = Toast.makeText(SmsActivity.this, "卡2", Toast.LENGTH_SHORT);
+                    t2.setGravity(Gravity.BOTTOM|Gravity.RIGHT,60,200);
+                    t2.show();
+                }else{
+                    Toast t1 = Toast.makeText(SmsActivity.this,"卡1",Toast.LENGTH_SHORT);
+                    t1.setGravity(Gravity.BOTTOM|Gravity.RIGHT,60,200);
+                    t1.show();
+                }
+            }
+        });
     }
 
     private void setUpSupportActionBar(){
@@ -158,7 +189,58 @@ public class SmsActivity extends AppCompatActivity {
         list.add(useful);
     }
 
+    private boolean isSendFunctionRvVisible(){
+        return sendFuctionRv.getVisibility() == View.VISIBLE;
+    }
+    TranslateAnimation mShowAction;
+    TranslateAnimation mHiddenAction;
 
+    private void createAnimation() {
+        mShowAction = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,
+                1.0f, Animation.RELATIVE_TO_SELF, 0.0f);
+        mShowAction.setDuration(400);
+
+        mHiddenAction = new TranslateAnimation(Animation.RELATIVE_TO_SELF,
+                0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,
+                1.0f);
+        mHiddenAction.setDuration(400);
+        mHiddenAction.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                sendFuctionRv.setVisibility(View.GONE);
+                mHiddenActionIsOver = true;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+    private boolean mHiddenActionIsOver = true;
+    private void showSmsFunction(){
+        if(sendFuctionRv.getVisibility() == View.GONE){
+            sendFuctionRv.startAnimation(mShowAction);
+            sendFuctionRv.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideSmsFunction(){
+        if(!mHiddenActionIsOver){
+            return;
+        }
+        if(sendFuctionRv.getVisibility() == View.VISIBLE){
+            sendFuctionRv.startAnimation(mHiddenAction);
+            mHiddenActionIsOver = false;
+        }
+    }
 
     private void querySmsFromDB(){
         Log.d(TAG,"querySmsFromDB");
@@ -296,5 +378,20 @@ public class SmsActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.collapse_sms_function:
+                if(isSendFunctionRvVisible()){
+                    hideSmsFunction();
+                }else{
+                    showSmsFunction();
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
