@@ -1,9 +1,14 @@
 package com.cj.simplecontacts;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.Telephony;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,27 +16,42 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.cj.simplecontacts.adapter.SendSmsFunctionAdapter;
 import com.cj.simplecontacts.adapter.SmsDetailAdapter;
 import com.cj.simplecontacts.enity.Message;
 import com.cj.simplecontacts.enity.SmsFunction;
+import com.cj.simplecontacts.tool.CommonTool;
 import com.cj.simplecontacts.tool.ContactTool;
 import com.cj.simplecontacts.tool.NumberUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -41,7 +61,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class SmsActivity extends AppCompatActivity implements View.OnClickListener{
+public class SmsActivity extends AppCompatActivity implements View.OnClickListener {
     private final static String TAG = "SmsActivity";
     private Toolbar toolbar;
     private ActionBar supportActionBar;
@@ -55,39 +75,49 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
     private Message message;
     private ImageButton collapseSmsFunction;
     private CheckBox selectSim;
-
+    private ImageView sendSms;
+    private LinearLayout ll;
+    private EditText smsEdit;
+    private int heightPixels;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms);
         Intent intent = getIntent();
-        if(intent != null){
+        if (intent != null) {
             message = intent.getParcelableExtra("sms");
         }
         initView();
         setUpSupportActionBar();
         setUpRecyclerView();
 
-        if(message != null){
+        if (message != null) {
             threadID = message.getThreadID();
             querySmsFromDB();
-            Log.d(TAG,"onCreate  threadID="+threadID);
+            Log.d(TAG, "onCreate  threadID=" + threadID);
 
-        }else{
-            Log.d(TAG,"message is null ");
+        } else {
+            Log.d(TAG, "message is null ");
         }
         addListener();
         createAnimation();
     }
 
 
-
-    private void initView(){
+    private void initView() {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        mRecyclerView = (RecyclerView)findViewById(R.id.rv_sms);
-        sendFuctionRv = (RecyclerView)findViewById(R.id.sms_send_function);
+        mRecyclerView = (RecyclerView) findViewById(R.id.rv_sms);
+        sendFuctionRv = (RecyclerView) findViewById(R.id.sms_send_function);
         collapseSmsFunction = (ImageButton) findViewById(R.id.collapse_sms_function);
         selectSim = (CheckBox) findViewById(R.id.select_sim);
+        sendSms = (ImageView) findViewById(R.id.send_sms);
+        ll = (LinearLayout) findViewById(R.id.ll);
+        smsEdit = (EditText) findViewById(R.id.sms_edit);
+
+        sendSms.setEnabled(false);
+
+
+        heightPixels = CommonTool.getCommonTool(this).getHeightPixels();
     }
 
     private void addListener() {
@@ -95,28 +125,91 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         selectSim.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
+
+                int y = (int) ll.getY();
+                Log.d(TAG, "onCheckedChanged   y="+y);
+                if (isChecked) {
                     Toast t2 = Toast.makeText(SmsActivity.this, "卡2", Toast.LENGTH_SHORT);
-                    t2.setGravity(Gravity.BOTTOM|Gravity.RIGHT,60,200);
+                    t2.setGravity(Gravity.BOTTOM | Gravity.RIGHT, 60, heightPixels-y+10);
                     t2.show();
-                }else{
-                    Toast t1 = Toast.makeText(SmsActivity.this,"卡1",Toast.LENGTH_SHORT);
-                    t1.setGravity(Gravity.BOTTOM|Gravity.RIGHT,60,200);
+                } else {
+                    Toast t1 = Toast.makeText(SmsActivity.this, "卡1", Toast.LENGTH_SHORT);
+                    t1.setGravity(Gravity.BOTTOM | Gravity.RIGHT, 60, heightPixels-y+10);
                     t1.show();
+                }
+            }
+        });
+        sendSms.setOnClickListener(this);
+        mRecyclerView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                HideSoftInput();
+                if(isSendFunctionRvVisible()){
+                    hideSmsFunction();
+                }
+                return false;
+            }
+        });
+        smsEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "onClick  search_et");
+                smsEdit.setCursorVisible(true);
+                if(isSendFunctionRvVisible()){
+                   // hideSmsFunction();
+                    sendFuctionRv.setVisibility(View.GONE);
+                }
+            }
+        });
+        smsEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    Log.d(TAG, "onFocusChange  hasFocus == true");
+                    if(isSendFunctionRvVisible()){
+                        //hideSmsFunction();
+                        sendFuctionRv.setVisibility(View.GONE);
+                    }
+                } else {
+
+                }
+            }
+        });
+
+        smsEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String trim = s.toString().trim();
+                if(TextUtils.isEmpty(trim)){
+                    sendSms.setEnabled(false);
+                    sendSms.setImageDrawable(SmsActivity.this.getResources().getDrawable(R.drawable.send_message_gray));
+                }else{
+                    sendSms.setImageDrawable(SmsActivity.this.getResources().getDrawable(R.drawable.send_message_normal_green));
+                    sendSms.setEnabled(true);
                 }
             }
         });
     }
 
-    private void setUpSupportActionBar(){
+    private void setUpSupportActionBar() {
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
         supportActionBar.setIcon(R.drawable.default_contact_head_icon);
-        if(message != null){
+        if (message != null) {
             String person = message.getPerson();
-            if(TextUtils.isEmpty(person)){
+            if (TextUtils.isEmpty(person)) {
                 supportActionBar.setTitle("陌生人");
-            }else {
+            } else {
                 supportActionBar.setTitle(person);
             }
             supportActionBar.setSubtitle(message.getAddress());
@@ -133,7 +226,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
 
     }
 
-    private void setUpRecyclerView(){
+    private void setUpRecyclerView() {
 
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
@@ -141,16 +234,16 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         mLayoutManager.setReverseLayout(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this,4);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 4);
 
         sendFuctionRv.setLayoutManager(gridLayoutManager);
         updateList();
-        SendSmsFunctionAdapter smsFunctionAdapter = new SendSmsFunctionAdapter(list,this);
+        SendSmsFunctionAdapter smsFunctionAdapter = new SendSmsFunctionAdapter(list, this);
         sendFuctionRv.setAdapter(smsFunctionAdapter);
 
     }
 
-    private void updateList(){
+    private void updateList() {
         list.clear();
         SmsFunction timing = new SmsFunction();
         timing.setName("定时");
@@ -189,9 +282,10 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         list.add(useful);
     }
 
-    private boolean isSendFunctionRvVisible(){
+    private boolean isSendFunctionRvVisible() {
         return sendFuctionRv.getVisibility() == View.VISIBLE;
     }
+
     TranslateAnimation mShowAction;
     TranslateAnimation mHiddenAction;
 
@@ -224,26 +318,28 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
             }
         });
     }
+
     private boolean mHiddenActionIsOver = true;
-    private void showSmsFunction(){
-        if(sendFuctionRv.getVisibility() == View.GONE){
+
+    private void showSmsFunction() {
+        if (sendFuctionRv.getVisibility() == View.GONE) {
             sendFuctionRv.startAnimation(mShowAction);
             sendFuctionRv.setVisibility(View.VISIBLE);
         }
     }
 
-    private void hideSmsFunction(){
-        if(!mHiddenActionIsOver){
+    private void hideSmsFunction() {
+        if (!mHiddenActionIsOver) {
             return;
         }
-        if(sendFuctionRv.getVisibility() == View.VISIBLE){
+        if (sendFuctionRv.getVisibility() == View.VISIBLE) {
             sendFuctionRv.startAnimation(mHiddenAction);
             mHiddenActionIsOver = false;
         }
     }
 
-    private void querySmsFromDB(){
-        Log.d(TAG,"querySmsFromDB");
+    private void querySmsFromDB() {
+        Log.d(TAG, "querySmsFromDB");
         Observable
                 .create(new ObservableOnSubscribe<Integer>() {
                     @Override
@@ -286,13 +382,13 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
     private void queryDetailInformation() {
         Log.d(TAG, "queryDetailInformation()");
         String st = "";
-        Cursor cursor = ContactTool.getSmsCursorByThreadID(getContentResolver(),threadID);
+        Cursor cursor = ContactTool.getSmsCursorByThreadID(getContentResolver(), threadID);
         if (cursor == null) {
             return;
         }
         st += "----------------------------------------------- \n";
 
-        while(cursor.moveToNext()){
+        while (cursor.moveToNext()) {
             Message message = new Message();
 
             int id = cursor.getInt(cursor.getColumnIndex(Telephony.Sms._ID));
@@ -301,7 +397,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
             String person = cursor.getString(cursor.getColumnIndex(Telephony.Sms.PERSON));
             long date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE));
             int subID = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID));
-            int readStatus= cursor.getInt(cursor.getColumnIndex(Telephony.Sms.READ));
+            int readStatus = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.READ));
             int status = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.STATUS));
             int type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE));
             String body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY));
@@ -337,43 +433,43 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         cursor.close();
     }
 
-    private void updateData(){
-        Log.d(TAG,"updateData  size="+datas.size());
-        adapter = new SmsDetailAdapter(datas,this);
+    private void updateData() {
+        Log.d(TAG, "updateData  size=" + datas.size());
+        adapter = new SmsDetailAdapter(datas, this);
         mRecyclerView.setAdapter(adapter);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        Log.d(TAG,"onCreateOptionsMenu");
+        Log.d(TAG, "onCreateOptionsMenu");
         getMenuInflater().inflate(R.menu.menu_sms_activity, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.d(TAG,"onOptionsItemSelected");
+        Log.d(TAG, "onOptionsItemSelected");
         int id = item.getItemId();
 
         if (id == R.id.clear_sms) {
-            Toast.makeText(this,"清空信息",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "清空信息", Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.contact_detail) {
-            Toast.makeText(this,"联系人详情",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "联系人详情", Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.add_block_list) {
-            Toast.makeText(this,"加入黑名单",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "加入黑名单", Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.more) {
-            Toast.makeText(this,"更多",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "更多", Toast.LENGTH_SHORT).show();
             return true;
         }
         if (id == R.id.call) {
-            Toast.makeText(this,"拨打电话",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "拨打电话", Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -381,14 +477,41 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
     }
 
     @Override
+    public void onBackPressed() {
+        if(isSendFunctionRvVisible()){
+            hideSmsFunction();
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
+    /**
+     * 隐藏软键盘
+     */
+    public void HideSoftInput(){
+        InputMethodManager imm =  (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(imm != null) {
+            imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(),
+                    0);
+        }
+    }
+
+    @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.collapse_sms_function:
                 if(isSendFunctionRvVisible()){
                     hideSmsFunction();
                 }else{
+                    HideSoftInput();
                     showSmsFunction();
                 }
+
+                break;
+            case R.id.send_sms:
+                Toast.makeText(this, "发送信息", Toast.LENGTH_SHORT).show();
+
                 break;
             default:
                 break;

@@ -49,4 +49,6 @@ public class ContactTool {
         Cursor c = resolver.query(uri, projection, Telephony.Sms.THREAD_ID+" = ?", new String[]{threadID+""}, sortString);
         return c;
     }
+
+
 }

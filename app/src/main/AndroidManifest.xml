@@ -36,7 +36,6 @@
             android:windowSoftInputMode="adjustPan" />
         <activity android:name=".SmsActivity"
             android:theme="@style/index_activity_theme"
-            android:windowSoftInputMode="adjustPan"
             ></activity>
     </application>
 

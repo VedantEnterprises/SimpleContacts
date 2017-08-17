@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -28,12 +29,13 @@
     </android.support.v7.widget.RecyclerView>
 
     <LinearLayout
+        android:id="@+id/ll"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <LinearLayout
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:background="#ffffff"
             android:gravity="center_vertical"
             android:layout_gravity="center_vertical"
@@ -47,6 +49,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <EditText
+                android:id="@+id/sms_edit"
+                android:background="@drawable/login_edit_normal"
                 android:layout_marginLeft="5dp"
                 android:layout_weight="1"
                 android:hint="短信/彩信"
@@ -60,6 +64,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <ImageView
+                android:clickable="true"
+                android:id="@+id/send_sms"
                 android:src="@drawable/send_message_gray"
                 android:layout_marginLeft="14dp"
                 android:layout_marginRight="14dp"
