@@ -1,8 +1,12 @@
 package com.cj.simplecontacts;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -19,6 +23,7 @@ import android.support.v7.widget.Toolbar;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -50,6 +55,7 @@ import com.cj.simplecontacts.tool.CommonTool;
 import com.cj.simplecontacts.tool.ContactTool;
 import com.cj.simplecontacts.tool.NumberUtil;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +69,9 @@ import io.reactivex.schedulers.Schedulers;
 
 public class SmsActivity extends AppCompatActivity implements View.OnClickListener {
     private final static String TAG = "SmsActivity";
+    /* 自定义ACTION常数，作为广播的Intent Filter识别常数 */
+    private static String SMS_SEND_ACTION = "SMS_SEND_ACTION";
+
     private Toolbar toolbar;
     private ActionBar supportActionBar;
     private RecyclerView mRecyclerView;
@@ -79,6 +88,12 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
     private LinearLayout ll;
     private EditText smsEdit;
     private int heightPixels;
+    private SMSSendResultReceiver mReceiver;
+    private String phoneNum;
+    private TranslateAnimation mShowAction;
+    private TranslateAnimation mHiddenAction;
+    private boolean mHiddenActionIsOver = true;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +116,9 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         }
         addListener();
         createAnimation();
+
+
+
     }
 
 
@@ -212,7 +230,8 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
             } else {
                 supportActionBar.setTitle(person);
             }
-            supportActionBar.setSubtitle(message.getAddress());
+            phoneNum = message.getAddress();
+            supportActionBar.setSubtitle(phoneNum);
         }
 
         toolbar.setOverflowIcon(getResources().getDrawable(R.drawable.overflow_btn_bg));
@@ -224,6 +243,18 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
             }
         });
 
+    }
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        IntentFilter mFilter = new IntentFilter();
+        mFilter.addAction(SMS_SEND_ACTION);
+        mReceiver = new SMSSendResultReceiver();
+        registerReceiver(mReceiver, mFilter);
     }
 
     private void setUpRecyclerView() {
@@ -286,8 +317,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         return sendFuctionRv.getVisibility() == View.VISIBLE;
     }
 
-    TranslateAnimation mShowAction;
-    TranslateAnimation mHiddenAction;
+
 
     private void createAnimation() {
         mShowAction = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f,
@@ -319,7 +349,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         });
     }
 
-    private boolean mHiddenActionIsOver = true;
+
 
     private void showSmsFunction() {
         if (sendFuctionRv.getVisibility() == View.GONE) {
@@ -381,6 +411,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
 
     private void queryDetailInformation() {
         Log.d(TAG, "queryDetailInformation()");
+        datas.clear();
         String st = "";
         Cursor cursor = ContactTool.getSmsCursorByThreadID(getContentResolver(), threadID);
         if (cursor == null) {
@@ -510,11 +541,81 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
 
                 break;
             case R.id.send_sms:
-                Toast.makeText(this, "发送信息", Toast.LENGTH_SHORT).show();
-
+                String content = smsEdit.getText().toString().trim();
+                sendSMS(content);
                 break;
             default:
                 break;
         }
+    }
+
+
+    /**
+     * 直接调用短信接口发短信    如果群发可以循环调用
+     * @param
+     * @param message
+     */
+    public void sendSMS(String message){
+        //获取短信管理器
+        SmsManager smsManager = SmsManager.getDefault();
+        //拆分短信内容（手机短信长度限制）
+        List<String> divideContents = smsManager.divideMessage(message);
+         /* 建立自定义Action常数的Intent(给PendingIntent参数之用) */
+        Class SMClass=SmsManager.class; //通过反射查到了SmsManager有个叫做mSubId的属性
+        Intent itSend = new Intent(SMS_SEND_ACTION);
+        Field field= null;
+        try {
+            field = SMClass.getDeclaredField("mSubId");
+            field.setAccessible(true);
+            field.set(smsManager,selectSim.isChecked()?3:2);//2是卡1  3卡2
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+          //我的手机上设定1就是卡1电信卡，设定0就是卡2联通卡，也没试过别的卡
+
+         /* sentIntent参数为传送后接受的广播信息PendingIntent */
+        PendingIntent mSendPI = PendingIntent.getBroadcast(getApplicationContext(), 0, itSend, 0);
+        for (String text : divideContents) {
+            smsManager.sendTextMessage(phoneNum, null, text, mSendPI, null);
+        }
+        smsEdit.setText("");
+    }
+
+
+    public class SMSSendResultReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(SMS_SEND_ACTION))
+            {
+                try
+                {
+                    switch(getResultCode())
+                    {
+                        case Activity.RESULT_OK:
+                            Toast.makeText(SmsActivity.this, "发送信息成功", Toast.LENGTH_SHORT).show();
+                            querySmsFromDB();
+                            break;
+                        case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                            Toast.makeText(SmsActivity.this, "发送短信失败", Toast.LENGTH_SHORT).show();
+                            break;
+                        case SmsManager.RESULT_ERROR_RADIO_OFF:
+                            break;
+                        case SmsManager.RESULT_ERROR_NULL_PDU:
+                            break;
+                    }
+                }
+                catch(Exception e)
+                {
+
+                    e.getStackTrace();
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
     }
 }
