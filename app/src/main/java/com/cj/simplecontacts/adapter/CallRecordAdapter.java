@@ -31,7 +31,7 @@ import java.util.ArrayList;
 public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.ViewHolder>{
     private ArrayList<CallRecord> list;
     private Context context;
-    //private boolean multiSim;
+    private boolean multiSim;
     private boolean isShowCheckBox = false;
 
 
@@ -99,9 +99,9 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
                 holder.number.setText(numAttr);
             }
         }
-//        if(!this.multiSim){
-//            holder.sim.setVisibility(View.GONE);
-//        }else{
+        if(!this.multiSim){
+           holder.sim.setVisibility(View.GONE);
+        }else{
 
             if(accountId.equals("2")){
                 holder.sim.setVisibility(View.VISIBLE);
@@ -112,12 +112,8 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
                 holder.sim.setVisibility(View.VISIBLE);
                 holder.sim.setText("卡2");
                 holder.sim.setBackground(context.getResources().getDrawable(R.drawable.sim2_text_bg));
-            }else{
-                holder.sim.setText(accountId);
-                holder.sim.setBackground(null);
-                holder.sim.setVisibility(View.GONE);
             }
-       // }
+        }
 
         if(isShowCheckBox){
             holder.cb.setVisibility(View.VISIBLE);
@@ -183,6 +179,17 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
         return count;
     }
 
+    public ArrayList<CallRecord> getCheckedList(){
+        ArrayList<CallRecord> calls = new ArrayList<>();
+        for(int i=0;i<list.size();i++){
+            CallRecord c = list.get(i);
+            if(c.isChecked()){
+                calls.add(c);
+            }
+        }
+        return calls;
+    }
+
 
     public void setShowCheckBox(boolean showCheckBox) {
         isShowCheckBox = showCheckBox;
@@ -202,7 +209,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Vi
     }
 
     public void setMultiSim(boolean multiSim) {
-       // this.multiSim = multiSim;
+        this.multiSim = multiSim;
     }
 
     public  class ViewHolder extends RecyclerView.ViewHolder {

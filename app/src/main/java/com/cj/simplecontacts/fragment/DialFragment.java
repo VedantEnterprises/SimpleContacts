@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
+import android.support.annotation.RestrictTo;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -70,7 +71,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by chenjun on 2017/6/a11.
  */
 
-public class DialFragment extends Fragment implements View.OnClickListener{
+public class DialFragment extends Fragment implements View.OnClickListener {
     private final static String TAG = "DialFragment";
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
@@ -104,7 +105,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
     }
 
 
-    private void setUpRecyclerView(){
+    private void setUpRecyclerView() {
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(context);
         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
@@ -117,10 +118,10 @@ public class DialFragment extends Fragment implements View.OnClickListener{
 
                 //CallRecord callRecord = datas.get(position);
                 boolean multiSim = NumberUtil.isMultiSim(context);
-                if(multiSim){
+                if (multiSim) {
                     showSelectSIMDialog(callRecord.getNumber());
-                }else{
-                    NumberUtil.call(context,0,callRecord.getNumber());
+                } else {
+                    NumberUtil.call(context, 0, callRecord.getNumber());
                 }
             }
 
@@ -134,27 +135,27 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             public void onItemChecked(CallRecord callRecord, View v) {
                 int checkedCount = adapter.getCheckedCount();
                 isAllSelected = checkedCount == adapter.getItemCount();
-                indexActivity.notifyCheckedItem(checkedCount,isAllSelected,Constant.DIAL_FRAGMENT);
+                indexActivity.notifyCheckedItem(checkedCount, isAllSelected, Constant.DIAL_FRAGMENT);
                 notifyPop(checkedCount);
             }
         });
     }
 
-    public void hideCheckBox(){
-        if(adapter != null){
+    public void hideCheckBox() {
+        if (adapter != null) {
             adapter.setShowCheckBox(false);
             adapter.setAllItemChecked(false);
         }
-        if(popupWindow != null){
+        if (popupWindow != null) {
             popupWindow.dismiss();
         }
     }
 
-    public boolean isAllSelected(){
+    public boolean isAllSelected() {
         return this.isAllSelected;
     }
 
-    public void setAllSelected(boolean isAllSelected){
+    public void setAllSelected(boolean isAllSelected) {
         this.isAllSelected = isAllSelected;//isSelectNone  fasle  当前已经全部选中
         adapter.setAllItemChecked(isAllSelected);
     }
@@ -169,7 +170,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
     private TextView delete;
 
 
-    private void showPop(View view){
+    private void showPop(View view) {
         popupView = indexActivity.getLayoutInflater().inflate(R.layout.dial_popwindow, null);
         fl1 = (FrameLayout) popupView.findViewById(R.id.fl1);
         fl2 = (FrameLayout) popupView.findViewById(R.id.fl2);
@@ -187,54 +188,54 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         fl2.setClickable(false);
         fl3.setClickable(false);
 
-        popupWindow  = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,true);
+        popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setFocusable(false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
         popupWindow.setAnimationStyle(R.style.PopupAnimation);
-        popupWindow.showAtLocation(view,Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM, 0, 0);
+        popupWindow.showAtLocation(view, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
 
     }
 
 
-    private void notifyPop(int checkedCount){
-        if(checkedCount>0){
+    private void notifyPop(int checkedCount) {
+        if (checkedCount > 0) {
             fl1.setClickable(true);
             fl2.setClickable(true);
             fl3.setClickable(true);
 
             Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon);
             removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
-            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setCompoundDrawables(null, removeDrawable, null, null);
             add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
 
             Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_ipcall);
             msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
-            ip_call.setCompoundDrawables(null,msgDrawable,null,null);
+            ip_call.setCompoundDrawables(null, msgDrawable, null, null);
             ip_call.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
 
             Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del);
             delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
-            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setCompoundDrawables(null, delDrawable, null, null);
             delete.setTextColor(getResources().getColor(R.color.pop_text_color_enable));
-        }else{
+        } else {
             fl1.setClickable(false);
             fl2.setClickable(false);
             fl3.setClickable(false);
 
             Drawable removeDrawable = getResources().getDrawable(R.drawable.bottom_remove_icon_disabled);
             removeDrawable.setBounds(0, 0, removeDrawable.getMinimumWidth(), removeDrawable.getMinimumHeight());
-            add_blacklist.setCompoundDrawables(null,removeDrawable,null,null);
+            add_blacklist.setCompoundDrawables(null, removeDrawable, null, null);
             add_blacklist.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
 
             Drawable msgDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_ipcall_disabled);
             msgDrawable.setBounds(0, 0, msgDrawable.getMinimumWidth(), msgDrawable.getMinimumHeight());
-            ip_call.setCompoundDrawables(null,msgDrawable,null,null);
+            ip_call.setCompoundDrawables(null, msgDrawable, null, null);
             ip_call.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
 
 
             Drawable delDrawable = getResources().getDrawable(R.drawable.mca_bottom_item_del_disabled);
             delDrawable.setBounds(0, 0, delDrawable.getMinimumWidth(), delDrawable.getMinimumHeight());
-            delete.setCompoundDrawables(null,delDrawable,null,null);
+            delete.setCompoundDrawables(null, delDrawable, null, null);
             delete.setTextColor(getResources().getColor(R.color.pop_text_color_disable));
         }
         popupWindow.update();
@@ -281,8 +282,8 @@ public class DialFragment extends Fragment implements View.OnClickListener{
      * @param num
      *
      */
-    private void showSelectSIMDialog(final String num){
-        final Dialog mDialog = new Dialog(context,R.style.DialogTheme);
+    private void showSelectSIMDialog(final String num) {
+        final Dialog mDialog = new Dialog(context, R.style.DialogTheme);
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.dialog_select_sim, null);
         TextView cancelCall = (TextView) view.findViewById(R.id.cancel_call);
@@ -292,7 +293,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View view) {
                 //Toast.makeText(context,"用卡1拨打",Toast.LENGTH_SHORT).show();
-                NumberUtil.call(context,0,num);
+                NumberUtil.call(context, 0, num);
                 mDialog.dismiss();
             }
         });
@@ -300,7 +301,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View view) {
                 // Toast.makeText(context,"用卡2拨打",Toast.LENGTH_SHORT).show();
-                NumberUtil.call(context,1,num);
+                NumberUtil.call(context, 1, num);
                 mDialog.dismiss();
             }
         });
@@ -319,8 +320,8 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         Window window = mDialog.getWindow();
         WindowManager.LayoutParams lp = window.getAttributes();
         lp.gravity = Gravity.CENTER;
-        lp.width =  (int) (d.getWidth() * 0.75);//宽度高可设置具体大小
-        lp.height =  WindowManager.LayoutParams.WRAP_CONTENT;
+        lp.width = (int) (d.getWidth() * 0.75);//宽度高可设置具体大小
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         window.setAttributes(lp);
 
         mDialog.show();
@@ -331,7 +332,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
         Log.d(TAG, "queryDetailInformation()");
         String st = "";
         Cursor cursor = getCallLogCursor();
-        if(cursor == null){
+        if (cursor == null) {
             return;
         }
         st += "----------------------------------------------- \n";
@@ -349,22 +350,22 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             int duration = cursor.getInt(cursor.getColumnIndex(CallLog.Calls.DURATION));
             long date = cursor.getLong(cursor.getColumnIndex(CallLog.Calls.DATE));
 
-            if(TextUtils.isEmpty(name)){
+            if (TextUtils.isEmpty(name)) {
                 //拨打电话  马上挂掉   不会有name
                 Cursor phone = resolver.query(
                         ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                         new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME},
-                        ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER+" = ?",
-                        new String[]{"+86"+number}, null);
-                if(phone.moveToFirst()){
-                    name= phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                   // Log.d(TAG, "queryDetailInformation() 数据库有 name = "+name);
-                }else{
-                   // Log.d(TAG, "queryDetailInformation() 数据库没有该电话话号码 ");
+                        ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " = ?",
+                        new String[]{"+86" + number}, null);
+                if (phone.moveToFirst()) {
+                    name = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    // Log.d(TAG, "queryDetailInformation() 数据库有 name = "+name);
+                } else {
+                    // Log.d(TAG, "queryDetailInformation() 数据库没有该电话话号码 ");
                 }
                 phone.close();
-            }else{
-               // Log.d(TAG, "queryDetailInformation() name is not null  "+name);
+            } else {
+                // Log.d(TAG, "queryDetailInformation() name is not null  "+name);
             }
             // 对手机号码进行预处理（去掉号码前的+86、首尾空格、“-”号等）
             number = number.replaceAll("^(\\+86)", "");
@@ -383,12 +384,12 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             NumberUtil.Numbers numbers = NumberUtil.checkNumber(number);
             NumberUtil.PhoneType phoneType = numbers.getType();
             String code = numbers.getCode();
-            if(NumberUtil.PhoneType.INVALIDPHONE == phoneType){//无效的
+            if (NumberUtil.PhoneType.INVALIDPHONE == phoneType) {//无效的
                 callRecord.setNumAttr("未知归属地");
 
-            }else {
-                String attribution = NumberUtil.getAttInfo(phoneType,code);
-                if(TextUtils.isEmpty(attribution)){//数据库没有存储
+            } else {
+                String attribution = NumberUtil.getAttInfo(phoneType, code);
+                if (TextUtils.isEmpty(attribution)) {//数据库没有存储
                     nums.add(callRecord);//稍后去查询
                 }
                 callRecord.setNumAttr(attribution);
@@ -401,7 +402,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
             callRecord.setDate(date);
             callRecord.setDuration(duration);
             callRecord.setId(id);
-            if(!datas.contains(callRecord)){
+            if (!datas.contains(callRecord)) {
                 datas.add(callRecord);
             }
         }
@@ -422,26 +423,26 @@ public class DialFragment extends Fragment implements View.OnClickListener{
     /**
      * 归属地查询
      */
-    private void queryNumberAttribution(){
-        Log.d(TAG,"queryNumberAttribution");
+    private void queryNumberAttribution() {
+        Log.d(TAG, "queryNumberAttribution");
         Observable.fromIterable(nums)
                 .observeOn(Schedulers.io())
                 .doOnNext(new Consumer<CallRecord>() {
                     @Override
                     public void accept(CallRecord callRecord) throws Exception {
-                       // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
+                        // Log.d(TAG,"queryNumberAttribution doOnNext  accept:"+Thread.currentThread().getName());
                         NumberUtil.Numbers numbers = NumberUtil.checkNumber(callRecord.getNumber());
                         NumberUtil.PhoneType type = numbers.getType();
                         String code = numbers.getCode();
-                        if(NumberUtil.PhoneType.INVALIDPHONE == type){//无效的
+                        if (NumberUtil.PhoneType.INVALIDPHONE == type) {//无效的
                             //phoneNumber.setNumAttribution("未知归属地");
                             return;
                         }
-                       // Log.d(TAG,"accept  code:"+code+" type:"+type);
+                        // Log.d(TAG,"accept  code:"+code+" type:"+type);
                         //String attribution = "";
-                        String attribution = NumberUtil.getAttInfo(type,code);
-                        if(TextUtils.isEmpty(attribution)){//数据库没有存储
-                            attribution = NumberUtil.getAttInfo(context,type,code);
+                        String attribution = NumberUtil.getAttInfo(type, code);
+                        if (TextUtils.isEmpty(attribution)) {//数据库没有存储
+                            attribution = NumberUtil.getAttInfo(context, type, code);
                         }
                         NumAttribution numAttribution = new NumAttribution();
                         numAttribution.setCode(code);
@@ -449,9 +450,9 @@ public class DialFragment extends Fragment implements View.OnClickListener{
                         numAttribution.setType(type.name());
                         callRecord.setNumAttr(attribution);
 
-                        String s = NumberUtil.getAttInfo(type,code);
-                        if(TextUtils.isEmpty(s)){//数据库没有存储
-                           // Log.d(TAG,"插入数据库");
+                        String s = NumberUtil.getAttInfo(type, code);
+                        if (TextUtils.isEmpty(s)) {//数据库没有存储
+                            // Log.d(TAG,"插入数据库");
                             BaseApplication.getDaoInstant().getNumAttributionDao().insert(numAttribution);
                         }
                     }
@@ -475,8 +476,8 @@ public class DialFragment extends Fragment implements View.OnClickListener{
 
                     @Override
                     public void onComplete() {
-                       // Log.d(TAG,"查询完成");
-                        if(adapter != null){
+                        // Log.d(TAG,"查询完成");
+                        if (adapter != null) {
                             adapter.notifyDataSetChanged();
                         }
                     }
@@ -544,21 +545,34 @@ public class DialFragment extends Fragment implements View.OnClickListener{
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
+        switch (view.getId()) {
             case R.id.fl1:
-                Toast.makeText(context,"加入黑名单",Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "加入黑名单", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.fl2:
-                Toast.makeText(context,"IP拨号",Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "IP拨号", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.fl3:
-                Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                if(!checkWriteCallLogPermission()){
+                  return;
+                }
+                ArrayList<CallRecord> checkedList = adapter.getCheckedList();
+                for (int i = 0; i < checkedList.size(); i++) {
+                    resolver.delete(CallLog.Calls.CONTENT_URI, "_id=?", new String[]{checkedList.get(i).getId()});
+                }
+                indexActivity.finishDialActionMode();
                 break;
             default:
                 break;
         }
     }
 
+    private boolean checkWriteCallLogPermission(){
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        return true;
+    }
 
     private class MyContentObserver extends ContentObserver {
 
@@ -599,8 +613,7 @@ public class DialFragment extends Fragment implements View.OnClickListener{
                 CallLog.Calls.GEOCODED_LOCATION,
                 CallLog.Calls.DURATION,
                 CallLog.Calls.DATE};
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-
+        if(!checkWriteCallLogPermission()){
             return null;
         }
         Cursor cursor =

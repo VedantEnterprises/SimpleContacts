@@ -551,7 +551,7 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
 
 
     /**
-     * 直接调用短信接口发短信    如果群发可以循环调用
+     * 直接调用短信接口发短信
      * @param
      * @param message
      */
@@ -571,8 +571,6 @@ public class SmsActivity extends AppCompatActivity implements View.OnClickListen
         } catch (Exception e) {
             e.printStackTrace();
         }
-          //我的手机上设定1就是卡1电信卡，设定0就是卡2联通卡，也没试过别的卡
-
          /* sentIntent参数为传送后接受的广播信息PendingIntent */
         PendingIntent mSendPI = PendingIntent.getBroadcast(getApplicationContext(), 0, itSend, 0);
         for (String text : divideContents) {

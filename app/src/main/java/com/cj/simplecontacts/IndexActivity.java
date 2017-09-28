@@ -447,8 +447,14 @@ public class IndexActivity extends AppCompatActivity {
                 dialFragment.hideCheckBox();
             }
             dialActionMode = null;
+
         }
     }
+
+    public void finishDialActionMode(){
+        dialActionMode.finish();
+    }
+
 
     private class SmsCallback implements ActionMode.Callback {
 
@@ -494,7 +500,9 @@ public class IndexActivity extends AppCompatActivity {
         }
     }
 
-
+    public void finishSmsActionMode(){
+        smsActionMode.finish();
+    }
 
     /**
      * 长按联系人列表 item  选择某个item时 通知选中的个数

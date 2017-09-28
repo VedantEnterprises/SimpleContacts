@@ -631,6 +631,14 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.fl4:
                 Toast.makeText(context,"删除",Toast.LENGTH_SHORT).show();
+                ArrayList<Message> checkedList = adapter.getCheckedList();
+                for (int i = 0; i < checkedList.size(); i++) {
+                    //resolver.delete(Uri.parse("content://sms"), Telephony.Sms.THREAD_ID+"=?", new String[]{checkedList.get(i).getThreadID()+""});
+                    resolver.delete(Uri.parse("content://sms/conversations/" + checkedList.get(i).getThreadID()),
+                            null, null);
+                }
+
+                indexActivity.finishSmsActionMode();
                 break;
             default:
                 break;
@@ -801,7 +809,7 @@ public class MessageFragment extends Fragment implements View.OnClickListener{
         search_clean_iv.setVisibility(View.GONE);
         search_et.setText("");
         search_et.setCursorVisible(false);
-        scrollToFirstPosition();
+
     }
 
 

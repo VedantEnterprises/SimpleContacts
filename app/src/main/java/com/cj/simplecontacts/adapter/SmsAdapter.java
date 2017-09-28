@@ -174,6 +174,17 @@ public class SmsAdapter extends RecyclerView.Adapter<SmsAdapter.ViewHolder>{
         return count;
     }
 
+    public ArrayList<Message> getCheckedList(){
+        ArrayList<Message> messages = new ArrayList<>();
+        for(int i=0;i<list.size();i++){
+            Message message = list.get(i);
+            if(message.isChecked()){
+                messages.add(message);
+            }
+        }
+        return messages;
+    }
+
     public void setAllItemChecked(boolean checked){
 
         for(int i=0;i<list.size();i++){
